@@ -37,12 +37,20 @@ const apsiUrl = 'https://script.google.com/macros/s/AKfycbyt5VsXRt3bouIFwdlgVwk2
 
 let allTransactions = [], budgetData = {}, goalsData = [];
 let pieChart, monthlyBarChart;
+let isDataLoading = false; // Penanda untuk mencegah request data tumpang tindih
 
 document.addEventListener('DOMContentLoaded', () => { initialize_app(); });
 
 function initialize_app() {
     setupEventListeners();
     loadDashboardData();
+
+    // BARU: Sinkronisasi data otomatis setiap 10 detik
+    const syncInterval = 10000; // 10 detik
+    setInterval(() => {
+        console.log(`Sinkronisasi otomatis dimulai... (Interval: ${syncInterval / 1000} detik)`);
+        loadDashboardData();
+    }, syncInterval);
 }
 
 function formatCurrency(amount) {
@@ -648,16 +656,28 @@ function sendData(data, submitButton = null) {
 }
 
 async function loadDashboardData() {
+    // Cek jika sedang dalam proses memuat data, batalkan request baru.
+    if (isDataLoading) {
+        console.log("Pembatalan: Proses pemuatan data lain sedang berjalan.");
+        return;
+    }
+    
     console.log("Mencoba mengambil data...");
+    isDataLoading = true; // Set penanda ke true
+
     try {
         const response = await fetch(apsiUrl);
         if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
         const { transactions, budgets, goals } = await response.json();
+        
         const validTransactions = (transactions || []).filter(trx => trx && trx.tanggal);
         validTransactions.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        
         allTransactions = [...validTransactions];
         budgetData = budgets || {};
         goalsData = goals || [];
+        
+        // Render semua komponen UI dengan data baru
         processSummary(allTransactions);
         displayRecentTransactions(allTransactions);
         applyFiltersAndRender();
@@ -666,8 +686,12 @@ async function loadDashboardData() {
         displayBudgets();
         displayGoals();
         displaySettingsLists();
+        
     } catch (error) {
         console.error('Gagal memuat data:', error);
+    } finally {
+        isDataLoading = false; // Set penanda kembali ke false setelah selesai
+        console.log("Proses pemuatan data selesai.");
     }
 }
 
