@@ -302,6 +302,11 @@ function setupEventListeners() {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.remove('is-open');
         });
+
+        const fabOpenModalBtn = document.getElementById('fab-open-modal-btn');
+        if (fabOpenModalBtn) {
+            fabOpenModalBtn.addEventListener('click', () => modal.classList.add('is-open'));
+        }
     }
 
     const navLinks = document.querySelectorAll('.sidebar-nav a');

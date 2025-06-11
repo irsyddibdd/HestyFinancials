@@ -1784,3 +1784,56 @@ body {
                                     padding-bottom: 0.8rem;           }
             }
 
+/* style.css */
+
+/* === (BARU) Floating Action Button (FAB) === */
+.fab-add-transaction {
+    display: none;
+    /* Sembunyikan di desktop secara default */
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gradient-main);
+    color: white;
+    border: none;
+    font-size: 1.5rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1500;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab-add-transaction:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+
+/* Tampilkan FAB hanya di mobile dan sembunyikan tombol header */
+@media (max-width: 768px) {
+    .add-new-btn {
+        display: none;
+        /* Pastikan tombol di header tetap tersembunyi */
+    }
+
+    .fab-add-transaction {
+        display: flex;
+        /* Tampilkan FAB di mobile */
+    }
+}
+
+/* Sembunyikan FAB di desktop */
+@media (min-width: 769px) {
+    .fab-add-transaction {
+        display: none;
+        /* Sembunyikan FAB di desktop */
+    }
+}
