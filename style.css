@@ -1,0 +1,1786 @@
+/* === FONT & GLOBAL RESET === */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #bb11cb;
+    --secondary-color: #fc25ea;
+    --gradient-main: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    --gradient-card: linear-gradient(135deg, #f0eaf7 0%, #eef4ff 100%);
+        /* !!! VARIABEL BARU KHUSUS UNTUK SPLASH SCREEN !!! */
+        --splash-gradient-start: #ffafcc;
+            /* Pink Permen */
+            --splash-gradient-end: #bde0fe;
+            /* Biru Langit Muda */
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --color-income: #22c55e;
+    --color-expense: #ef4444;
+    --color-balance: #3b82f6;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+/* === SPLASH SCREEN / INTRO ANIMATION (DENGAN LATAR ANIMASI) === */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* 1. Menggunakan gradasi pink-ungu sesuai tema */
+    background: linear-gradient(135deg, var(--splash-gradient-start), var(--splash-gradient-end));
+    /* 2. Membuat ukuran background jauh lebih besar dari layar */
+    background-size: 400% 400%;
+
+    /* 3. Menerapkan animasi pergerakan background */
+    animation: breathing-gradient 8s ease infinite;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+.splash-content {
+    text-align: center;
+    color: #3a3939e7;
+}
+
+/* Animasi untuk LOGO: Muncul dengan efek membesar */
+.splash-logo {
+    line-height: 1;
+    animation: scale-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    transform: scale(0);
+}
+
+.splash-logo img {
+    width: 100px;
+    height: auto;
+}
+
+/* Animasi untuk JUDUL: Muncul dari bawah sambil fade-in */
+.splash-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-top: 1rem;
+    opacity: 0;
+    animation: fade-slide-in 0.7s ease-out 0.6s forwards;
+    /* Delay 0.6s */
+}
+
+/* Animasi untuk TITIK LOADING: Fade-in lalu berdenyut */
+.loading-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    opacity: 0;
+    animation: fade-in 0.5s ease 1.2s forwards;
+    /* Delay 1.2s */
+}
+
+.loading-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: white;
+    margin: 0 5px;
+    animation: pulse-dots 1.4s infinite ease-in-out;
+}
+
+/* Memberi delay pada setiap titik agar animasinya berurutan */
+.loading-dots .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* === KEYFRAMES UNTUK SEMUA ANIMASI BARU === */
+
+/* Keyframe BARU untuk animasi latar "bernapas" */
+@keyframes breathing-gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Keyframe untuk animasi logo membesar */
+@keyframes scale-in {
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Keyframe untuk animasi judul muncul dari bawah */
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Keyframe dasar untuk fade-in */
+@keyframes fade-in {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Keyframe untuk animasi titik loading berdenyut */
+@keyframes pulse-dots {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+
+/* Kelas utilitas dari JS (biarkan seperti semula) */
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.app-layout {
+    display: flex;
+    opacity: 0;
+    transition: opacity 0.6s ease-in;
+}
+
+.app-layout.visible {
+    opacity: 1;
+}
+
+/* === APP LAYOUT === */
+.sidebar {
+    width: 250px;
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: fixed;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar-header h2 {
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 2.5rem;
+}
+
+.sidebar-header h2 span {
+    font-weight: 500;
+    font-size: 1.2rem;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav li a i {
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-nav li a:hover {
+    background-color: #eef2ff;
+    color: var(--primary-color);
+}
+
+.sidebar-nav li.active a {
+    background: var(--gradient-main);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.main-content {
+    flex-grow: 1;
+    margin-left: 250px;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* === HEADER & CARDS === (Ganti dengan versi ini) */
+
+.main-header {
+    display: flex;
+    /* <-- DIUBAH: Sekarang header selalu terlihat */
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.main-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    /* Hapus text-align: left agar bisa berdampingan dengan tombol */
+}
+
+.menu-toggle {
+    display: none;
+    /* <-- DIUBAH: Sembunyikan tombol hamburger di desktop */
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.icon-balance {
+    background-color: var(--color-balance);
+}
+
+.icon-income {
+    background-color: var(--color-income);
+}
+
+.icon-expense {
+    background-color: var(--color-expense);
+}
+
+.card-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* === DASHBOARD GRID & CHARTS === */
+.main-dashboard-grid {
+    margin-top: 1.5rem;
+        display: grid;
+        /* Buat 2 kolom dengan lebar yang sama */
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+}
+
+.pie-chart-container {
+    max-width: 300px;
+    margin: 1rem auto;
+}
+
+/* === TRANSACTION TABLE (MINIMALIST) === */
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transaction-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.transaction-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.transaction-history .view-all {
+    margin-top: auto;
+    text-align: center;
+    padding-top: 800rem;
+    gap: 10rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+/* === RESPONSIVE DESIGN (MOBILE-FIRST APPROACH) === */
+@media (max-width: 1024px) {
+    .main-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container,
+    .transaction-history,
+    .expense-breakdown {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1000;
+    }
+
+    .sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 1.5rem;
+    }
+
+    .main-header,
+        .menu-toggle {
+            display: flex;
+            /* <-- DIUBAH: Tampilkan tombol hamburger di mobile */
+            align-items: center;
+        }
+
+    /* BARU: Sembunyikan tombol besar di mobile agar tidak penuh */
+    .add-new-btn {
+        display: none;
+    }
+
+    .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* === Tombol Tambah Transaksi & Modal Styles === */
+
+.add-new-btn {
+    margin-left: auto;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    /* 1. Menggunakan gradasi dan mengatur ukurannya */
+    background: var(--gradient-main);
+    background-size: 200% auto;
+
+    /* 2. Menambahkan shadow yang sama */
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+
+    /* 3. Menambahkan transisi yang halus */
+    transition: background-position 0.5s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.add-new-btn:hover {
+    /* 4. Menggeser posisi background saat hover */
+    background-position: right center;
+
+    /* 5. Mengangkat tombol dan mempertegas shadow */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(187, 17, 203, 0.55);
+}
+
+.add-new-btn:active {
+    /* 6. Efek saat tombol ditekan */
+    transform: translateY(0);
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(30, 41, 59, 0.5);
+    /* Warna overlay gelap transparan */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 500px;
+    transform: translateY(-20px) scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.is-open .modal-content {
+    transform: translateY(0) scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* === FINAL MAKEOVER: Modal & Form Styles === */
+
+/* Mengatur Latar Belakang Overlay */
+.modal-overlay {
+    backdrop-filter: blur(5px);
+    /* Efek blur pada latar belakang */
+}
+
+/* Mengatur Tampilan Konten Modal */
+.modal-content {
+    background-color: var(--card-bg);
+    border-radius: 1.25rem;
+    /* Sudut lebih membulat */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 550px;
+    padding: 0;
+    /* Hapus padding default untuk kontrol penuh */
+    border: 1px solid var(--border-color);
+}
+
+/* Header Modal yang Bersih */
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.close-modal-btn {
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+}
+
+/* Body Modal dengan Spasi yang Baik */
+.modal-body {
+    padding: 1.5rem 2rem 2rem 2rem;
+}
+
+/* Merapikan Grup Form */
+.modal-body .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.modal-body label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* === Kotak Input Modern (Input & Select) === */
+.modal-body input[type="date"],
+.modal-body input[type="number"],
+.modal-body input[type="text"],
+.modal-body select {
+    font-family: 'Poppins', sans-serif;
+    /* Memastikan font Poppins dipakai */
+    font-size: 1rem;
+    width: 100%;
+    padding: 0.875rem 0;
+    /* Padding hanya atas-bawah */
+    color: var(--text-primary);
+
+    /* Menghilangkan semua hiasan default */
+    border: none;
+    outline: none;
+    background: none;
+
+    /* Garis Bawah Minimalis */
+    border-bottom: 2px solid var(--border-color);
+    transition: border-bottom-color 0.3s ease;
+}
+
+/* Efek saat input di-klik (focus) */
+.modal-body input:focus,
+.modal-body select:focus {
+    border-bottom-color: var(--primary-color);
+}
+
+/* === Tombol Simpan Catatan yang Elegan === */
+.modal-body button#submitButton {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+
+    background: var(--gradient-main);
+    border: none;
+    border-radius: 0.75rem;
+    /* Sudut membulat */
+
+    cursor: pointer;
+    box-shadow: 0 4px 15px -5px rgba(106, 17, 203, 0.5);
+    transition: all 0.3s ease;
+}
+
+/* Efek saat tombol di-hover */
+.modal-body button#submitButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px -6px rgba(106, 17, 203, 0.6);
+}
+
+/* === Gaya untuk Halaman & Navigasi SPA === */
+
+/* Kelas untuk menyembunyikan halaman yang tidak aktif */
+.page-hidden {
+    display: none;
+}
+
+/* Penyesuaian untuk tabel riwayat lengkap */
+.transaction-table-full {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transaction-table-full th,
+.transaction-table-full td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+.transaction-table-full th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: #f9fafb;
+}
+
+/* === Gaya untuk Kontrol Filter === */
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    /* Agar responsif di layar kecil */
+}
+
+.filter-controls input[type="text"],
+.filter-controls select {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+.filter-controls input[type="text"] {
+    flex-grow: 1;
+    /* Biarkan kotak pencarian memanjang */
+}
+
+.filter-controls input:focus,
+.filter-controls select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--pink-soft);
+}
+
+/* === (PERBAIKAN TAMPILAN) Riwayat Terbaru di Dashboard === */
+
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.recent-transaction-item td {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Menghilangkan garis bawah pada item terakhir */
+.transaction-history .transaction-table tr:last-child td {
+    border-bottom: none;
+}
+
+.transaction-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+    /* Mencegah ikon menyusut */
+}
+
+.transaction-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.transaction-category {
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.transaction-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.transaction-amount {
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Perbaikan untuk warna jumlah di tabel riwayat lengkap */
+.jumlah-pemasukan {
+    color: var(--color-income);
+    font-weight: 600;
+}
+
+.jumlah-pengeluaran {
+    color: var(--color-expense);
+    font-weight: 600;
+}
+
+/* === Gaya untuk Halaman Laporan === */
+.chart-container-full {
+    position: relative;
+    height: 400px;
+    /* Beri tinggi agar grafik terlihat jelas */
+    margin-top: 2rem;
+}
+
+/* === Gaya untuk Halaman Anggaran === */
+#budget-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.budget-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.budget-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.budget-card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.budget-card-header .percent {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.budget-card-amount {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    /* Diatur oleh JS */
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* Warna Progress Bar */
+.progress-bar.safe {
+    background-color: var(--color-income);
+}
+
+.progress-bar.warning {
+    background-color: #f59e0b;
+}
+
+.progress-bar.danger {
+    background-color: var(--color-expense);
+}
+
+/* === (BARU) Gaya untuk Ikon Peringatan Budget === */
+
+.budget-warning-icon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #f59e0b;
+    /* Warna kuning amber untuk peringatan */
+    animation: pulse 2s infinite;
+    /* Menerapkan animasi berkedip */
+}
+
+/* Definisi animasi berkedip (pulse) */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+}
+
+/* === Gaya untuk Halaman Tujuan === */
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Kita bisa gunakan ulang gaya budget-card, tapi kita buatkan khusus jika ingin dibedakan */
+.goal-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.goal-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.goal-card-amount {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* Menggunakan progress bar yang sama dengan budget, tapi warnanya bisa kita bedakan */
+.goal-card .progress-bar {
+    background: var(--gradient-main);
+    /* Pakai warna gradasi utama */
+}
+
+/* === Gaya untuk Halaman Pengaturan === */
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .settings-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.settings-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-form input {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+.settings-form button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* ===============================================
+!!! INI ADALAH PERBAIKANNYA !!!
+===============================================
+*/
+.settings-form button:hover {
+    background-color: var(--secondary-color);
+    /* Menggunakan variabel warna --secondary-color yang sudah ada */
+}
+
+.settings-list {
+    list-style: none;
+    padding: 0;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.settings-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.settings-list li:last-child {
+    border-bottom: none;
+}
+
+.settings-form button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+
+    padding: 0 1.25rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+
+    /* 1. MENGGUNAKAN GRADASI SEBAGAI LATAR BELAKANG */
+    background: var(--gradient-main);
+
+    /* 2. MEMBUAT LATAR BELAKANG 2X LEBIH LEBAR DARI TOMBOLNYA */
+    background-size: 200% auto;
+
+    /* 3. MENAMBAHKAN BAYANGAN (SHADOW) YANG SUBTIL */
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+
+    /* 4. INI KUNCINYA: TRANSISI SUPER HALUS */
+    /* Kita animasikan pergerakan background, shadow, dan posisi tombol */
+    transition: background-position 0.5s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.settings-form button:hover {
+    /* 5. SAAT HOVER, GESER POSISI LATAR BELAKANG KE KANAN */
+    /* Ini akan menciptakan efek animasi gradasi yang bergerak */
+    background-position: right center;
+
+    /* 6. PERTEGAS BAYANGAN DAN ANGKAT TOMBOLNYA SEDIKIT */
+    box-shadow: 0 6px 20px 0 rgba(187, 17, 203, 0.55);
+    transform: translateY(-2px);
+}
+
+.settings-form button:active {
+    /* 7. EFEK SAAT TOMBOL DITEKAN */
+    transform: translateY(0);
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+}
+
+/* === APP LAYOUT === */
+.app-layout {
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: fixed;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar-header h2 {
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 2.5rem;
+}
+
+.sidebar-header h2 span {
+    font-weight: 500;
+    font-size: 1.2rem;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav li a i {
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-nav li a:hover {
+    background-color: #eef2ff;
+    color: var(--primary-color);
+}
+
+.sidebar-nav li.active a {
+    background: var(--gradient-main);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.main-content {
+    flex-grow: 1;
+    margin-left: 250px;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.main-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.main-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.icon-balance {
+    background-color: var(--color-balance);
+}
+
+.icon-income {
+    background-color: var(--color-income);
+}
+
+.icon-expense {
+    background-color: var(--color-expense);
+}
+
+.card-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.main-dashboard-grid {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.pie-chart-container {
+    max-width: 300px;
+    margin: 1rem auto;
+}
+
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transaction-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.transaction-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.transaction-history .view-all {
+    margin-top: 1rem;
+    text-align: center;
+    display: block;
+    padding-top: 1rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.add-new-btn {
+    margin-left: auto;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gradient-main);
+    background-size: 200% auto;
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+    transition: background-position 0.5s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.add-new-btn:hover {
+    background-position: right center;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(187, 17, 203, 0.55);
+}
+
+.add-new-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(30, 41, 59, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.modal-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border-radius: 1.25rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 550px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    transform: translateY(-20px) scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.is-open .modal-content {
+    transform: translateY(0) scale(1);
+}
+
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem 2rem 2rem 2rem;
+}
+
+.modal-body .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.modal-body label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.modal-body input[type="date"],
+.modal-body input[type="number"],
+.modal-body input[type="text"],
+.modal-body select {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    width: 100%;
+    padding: 0.875rem 0;
+    color: var(--text-primary);
+    border: none;
+    outline: none;
+    background: none;
+    border-bottom: 2px solid var(--border-color);
+    transition: border-bottom-color 0.3s ease;
+}
+
+.modal-body input:focus,
+.modal-body select:focus {
+    border-bottom-color: var(--primary-color);
+}
+
+.modal-body button#submitButton {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--gradient-main);
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px -5px rgba(106, 17, 203, 0.5);
+    transition: all 0.3s ease;
+}
+
+.modal-body button#submitButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px -6px rgba(106, 17, 203, 0.6);
+}
+
+.page-hidden {
+    display: none;
+}
+
+.transaction-table-full {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transaction-table-full th,
+.transaction-table-full td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+.transaction-table-full th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: #f9fafb;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-controls input[type="text"],
+.filter-controls select {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+.filter-controls input[type="text"] {
+    flex-grow: 1;
+}
+
+.filter-controls input:focus,
+.filter-controls select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(187, 17, 203, 0.2);
+}
+
+.recent-transaction-item td {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transaction-history .transaction-table tr:last-child td {
+    border-bottom: none;
+}
+
+.transaction-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.transaction-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.transaction-category {
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.transaction-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.transaction-amount {
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.jumlah-pemasukan {
+    color: var(--color-income);
+    font-weight: 600;
+}
+
+.jumlah-pengeluaran {
+    color: var(--color-expense);
+    font-weight: 600;
+}
+
+.chart-container-full {
+    position: relative;
+    height: 400px;
+    margin-top: 2rem;
+}
+
+#budget-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.budget-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.budget-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.budget-card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.budget-card-header .percent {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.budget-card-amount {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.progress-bar.safe {
+    background-color: var(--color-income);
+}
+
+.progress-bar.warning {
+    background-color: #f59e0b;
+}
+
+.progress-bar.danger {
+    background-color: var(--color-expense);
+}
+
+.budget-warning-icon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #f59e0b;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.goal-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.goal-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.goal-card-amount {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.goal-card .progress-bar {
+    background: var(--gradient-main);
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.settings-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-form input {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+.settings-form button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    padding: 0 1.25rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    background: var(--gradient-main);
+    background-size: 200% auto;
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+    transition: background-position 0.5s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.settings-form button:hover {
+    background-position: right center;
+    box-shadow: 0 6px 20px 0 rgba(187, 17, 203, 0.55);
+    transform: translateY(-2px);
+}
+
+.settings-form button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px 0 rgba(187, 17, 203, 0.4);
+}
+
+.settings-list {
+    list-style: none;
+    padding: 0;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.settings-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.settings-list li:last-child {
+    border-bottom: none;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 1024px) {
+    .main-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 1.5rem;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .add-new-btn {
+        display: none;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+        /* !!! KODE BARU UNTUK GRAFIK LAPORAN !!! */
+        .chart-container-full {
+            height: 350px;
+            /* Kurangi tinggi grafik di mobile */
+        }
+    
+        /* Aturan untuk tabel transaksi (dari perbaikan sebelumnya) */
+        .transaction-table-full {
+            border: none;
+        }
+    
+        .transaction-table-full thead {
+            display: none;
+        }
+    
+        .transaction-table-full tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-sm);
+            padding: 1rem;
+            background-color: var(--card-bg);
+        }
+    
+        .transaction-table-full td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+                .transaction-table-full tr td:last-child {
+                border-bottom: none;
+                }
+        
+                .transaction-table-full td::before {
+                    content: attr(data-label);
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                    text-align: left;
+                    margin-right: 1rem;
+                }
+        
+                .transaction-table-full td[data-label="Jumlah"] {
+                    font-weight: 700;
+                    font-size: 1rem;
+                }   
+
+                                .settings-form {
+                                    flex-direction: column;
+                                    /* Susun form secara vertikal */
+                                    align-items: stretch;
+                                    /* Buat elemen membentang penuh */
+                                }
+                
+                                .settings-form input {
+                                    width: 100%;
+                                    margin-bottom: 0.75rem;
+                                    /* Beri jarak antar input */
+                                }
+                
+                                .settings-form input:last-of-type {
+                                    margin-bottom: 0;
+                                    /* Hapus margin bawah pada input terakhir */
+                                }
+                
+                                .settings-form button {
+                                    margin-top: 0.75rem;
+                                    /* Beri jarak di atas tombol */
+                                    padding-top: 0.8rem;
+                                    /* Sedikit tinggikan tombol agar mudah disentuh */
+                                    padding-bottom: 0.8rem;           }
+            }
+
