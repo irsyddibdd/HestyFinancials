@@ -12,7 +12,7 @@
             --splash-gradient-end: #bde0fe;
             /* Biru Langit Muda */
     --card-bg: #ffffff;
-    --text-primary: #1e293b;
+    --text-primary: #302e2e;
     --text-secondary: #64748b;
     --border-color: #e2e8f0;
     --color-income: #22c55e;
@@ -29,9 +29,30 @@
 }
 
 body {
+    position: relative;
+    /* Diperlukan untuk overlay */
     font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-color);
     color: var(--text-primary);
+    background-image: url('rapunzel.jpg');
+    /* Tetap seperti ini */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* TAMBAHKAN KODE BARU INI */
+body::before {
+    content: '';
+    position: fixed;
+    /* atau absolute */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(74, 39, 79, 0.6); /* Ungu Tua dari palet Rapunzel, sedikit lebih gelap */
+    /* Lapisan hitam 50% transparan. Anda bisa ganti ke warna ungu tua */
+    z-index: -1;
+    /* Posisikan di belakang konten */
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION (DENGAN LATAR ANIMASI) === */
@@ -291,7 +312,7 @@ body {
 }
 
 .card {
-    background-color: var(--card-bg);
+    background-color: rgba(255, 255, 255, 0.85);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: var(--shadow-md);
