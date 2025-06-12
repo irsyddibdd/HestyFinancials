@@ -317,6 +317,7 @@ body::before {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: white; /* <<<--- TAMBAHKAN BARIS INI */
 }
 
 .card {
