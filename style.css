@@ -12,8 +12,10 @@
             --splash-gradient-end: #bde0fe;
             /* Biru Langit Muda */
     --card-bg: #ffffff;
-    --text-primary: #302e2e;
+    --text-primary: #333333;
+        /* Abu-abu gelap untuk teks utama */    
     --text-secondary: #64748b;
+    --title-color: #FFFFFF; /* <<<--- TAMBAHKAN BARIS INI */
     --border-color: #e2e8f0;
     --color-income: #22c55e;
     --color-expense: #ef4444;
@@ -300,6 +302,12 @@ body::before {
     font-size: 1.8rem;
     margin: 0;
     /* Hapus text-align: left agar bisa berdampingan dengan tombol */
+    color: white; /* <<<--- CUKUP TAMBAHKAN BARIS INI */
+}
+
+/* Lalu tambahkan blok baru di bawahnya */
+#page-dashboard .main-header h1 {
+    color: var(--title-color);
 }
 
 .menu-toggle {
