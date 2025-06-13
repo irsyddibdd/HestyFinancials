@@ -18,6 +18,12 @@
     --color-balance: #3b82f6;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        /* !!! VARIABEL BARU UNTUK MODE GELAP !!! */
+            --dark-bg: #1a202c;
+            --dark-card-bg: #2d3748;
+            --dark-text-primary: #e2e8f0;
+            --dark-text-secondary: #a0aec0;
+            --dark-border-color: #4a5568;
 }
 
 * {
@@ -689,7 +695,6 @@ body::before {
     border-radius: 10px;
     transition: width 0.5s ease;
 }
-
 .progress-bar.safe {
     background-color: var(--color-income);
 }
@@ -754,6 +759,7 @@ body::before {
 
 .goal-card .progress-bar {
     background: var(--gradient-main);
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .settings-grid {
@@ -969,4 +975,277 @@ body::before {
     .fab-add-transaction {
         display: none;
     }
+}
+
+/* === GAYA BARU UNTUK HALAMAN PENCAPAIAN === */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.badge-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.badge-card.locked {
+    background-color: #f8fafc;
+    /* Sedikit berbeda untuk yang terkunci */
+    filter: grayscale(80%);
+    opacity: 0.7;
+}
+
+.badge-card .badge-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #f59e0b;
+    /* Warna emas untuk ikon piala */
+}
+
+.badge-card .badge-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.badge-card .badge-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.badge-card:not(.locked) {
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+/* === GAYA BARU UNTUK DASBOR KARTU MODERN === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.card .card-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.card-main-balance h3 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--color-balance);
+    margin-bottom: 1rem;
+}
+
+.rekening-breakdown {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rekening-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.rekening-item .name {
+    color: var(--text-secondary);
+}
+
+.rekening-item .amount {
+    font-weight: 600;
+}
+
+.card-cashflow .cashflow-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.cashflow-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.dot-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot-indicator.income {
+    background-color: var(--color-income);
+}
+
+.dot-indicator.expense {
+    background-color: var(--color-expense);
+}
+
+.cashflow-amount {
+    font-weight: 600;
+}
+
+.cashflow-bar-container {
+    display: flex;
+    width: 100%;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #e2e8f0;
+    margin-top: 1rem;
+}
+
+.bar-income,
+.bar-expense {
+    height: 100%;
+    transition: width 0.8s ease-out;
+}
+
+.bar-income {
+    background-color: var(--color-income);
+}
+
+.bar-expense {
+    background-color: var(--color-expense);
+}
+
+
+.card-calendar .calendar-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.calendar-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.calendar-grid,
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 5px;
+}
+
+.calendar-weekdays {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.calendar-day {
+    position: relative;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    border-radius: 50%;
+}
+
+.calendar-day.empty {
+    visibility: hidden;
+}
+
+.calendar-day .dots-wrapper {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+}
+
+.calendar-day .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.calendar-day .dot.income {
+    background-color: var(--color-income);
+}
+
+.calendar-day .dot.expense {
+    background-color: var(--color-expense);
+}
+
+/* === GAYA BARU UNTUK MODAL BUKTI TRANSAKSI === */
+.receipt-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.receipt-content img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.close-receipt-btn {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 35px;
+    height: 35px;
+    background-color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 2rem;
+    font-weight: 300;
+    color: #333;
+    cursor: pointer;
+    line-height: 35px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+
+.view-receipt-btn {
+    color: var(--primary-color);
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.view-receipt-btn:hover {
+    color: var(--secondary-color);
+}
+
+/* === GAYA BARU UNTUK FILTER DI HALAMAN LAPORAN === */
+.filter-controls-laporan {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.filter-controls-laporan select {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+body.dark-mode .filter-controls-laporan select {
+    background-color: #1A202C;
+    color: var(--dark-text-primary);
+    border-color: var(--dark-border-color);
 }

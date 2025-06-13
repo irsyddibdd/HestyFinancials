@@ -57,6 +57,7 @@
                     <li><a href="#" data-page="page-laporan"><i class="fas fa-chart-pie"></i> Laporan</a></li>
                     <li><a href="#" data-page="page-anggaran"><i class="fas fa-piggy-bank"></i> Anggaran</a></li>
                     <li><a href="#" data-page="page-tujuan"><i class="fas fa-bullseye"></i> Tujuan</a></li>
+                    <li><a href="#" data-page="page-pencapaian"><i class="fas fa-trophy"></i> Pencapaian</a></li>
                     <li><a href="#" data-page="page-pengaturan"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 </ul>
             </nav>
@@ -71,35 +72,58 @@
             <!-- Page: Dashboard -->
             <div id="page-dashboard">
                 <header class="main-header">
-                    <button class="menu-toggle" id="menu-toggle-dashboard"><i class="fas fa-bars"></i></button>
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
                     <h1>Selamat Datang, Hesty!</h1>
-                    <button class="add-new-btn" id="open-modal-btn"><i class="fas fa-plus"></i> Tambah
-                        Transaksi</button>
+                    <button class="add-new-btn" id="open-modal-btn"><i class="fas fa-plus"></i> Tambah Transaksi</button>
                 </header>
-                <section class="summary-cards">
-                    <div class="card summary-card">
-                        <div class="card-icon icon-balance"><i class="fas fa-wallet"></i></div>
-                        <div class="card-content">
-                            <p>Total Saldo</p>
-                            <h3 id="total-saldo">Rp 0</h3>
+            
+                <section class="dashboard-grid">
+                    <div class="card card-main-balance">
+                        <p class="card-title">Total Saldo Keseluruhan</p>
+                        <h3 id="total-saldo-utama">Rp 0</h3>
+                        <div id="rekening-breakdown" class="rekening-breakdown">
                         </div>
                     </div>
-                    <div class="card summary-card">
-                        <div class="card-icon icon-income"><i class="fas fa-arrow-down"></i></div>
-                        <div class="card-content">
-                            <p>Pemasukan (Bulan Ini)</p>
-                            <h3 id="total-pemasukan">Rp 0</h3>
+            
+                    <div class="card card-cashflow">
+                        <p class="card-title">Arus Kas Bulan Ini</p>
+                        <div class="cashflow-item">
+                            <div class="cashflow-label">
+                                <span class="dot-indicator income"></span> Pemasukan
+                            </div>
+                            <span id="cashflow-pemasukan" class="cashflow-amount">Rp 0</span>
+                        </div>
+                        <div class="cashflow-item">
+                            <div class="cashflow-label">
+                                <span class="dot-indicator expense"></span> Pengeluaran
+                            </div>
+                            <span id="cashflow-pengeluaran" class="cashflow-amount">Rp 0</span>
+                        </div>
+                        <div class="cashflow-bar-container">
+                            <div id="cashflow-bar-pemasukan" class="bar-income"></div>
+                            <div id="cashflow-bar-pengeluaran" class="bar-expense"></div>
                         </div>
                     </div>
-                    <div class="card summary-card">
-                        <div class="card-icon icon-expense"><i class="fas fa-arrow-up"></i></div>
-                        <div class="card-content">
-                            <p>Pengeluaran (Bulan Ini)</p>
-                            <h3 id="total-pengeluaran">Rp 0</h3>
+            
+                    <div class="card card-calendar">
+                        <div class="calendar-header">
+                            <h3 id="calendar-month-year">Bulan Ini</h3>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Min</div>
+                            <div>Sen</div>
+                            <div>Sel</div>
+                            <div>Rab</div>
+                            <div>Kam</div>
+                            <div>Jum</div>
+                            <div>Sab</div>
+                        </div>
+                        <div id="financial-calendar-grid" class="calendar-grid">
                         </div>
                     </div>
                 </section>
-                <section class="main-dashboard-grid">
+            
+                <section class="main-dashboard-grid" style="margin-top: 1.5rem;">
                     <div class="card transaction-history">
                         <h2>Riwayat Terbaru</h2>
                         <table class="transaction-table">
@@ -113,7 +137,7 @@
                             <canvas id="pieChart"></canvas>
                         </div>
                     </div>
-                </section>
+                </section>      
             </div>
 
             <!-- Page: Riwayat Transaksi -->
@@ -147,6 +171,15 @@
                 </div>
             </div>
 
+            <div id="page-pencapaian" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <h1>Pencapaian Anda</h1>
+                </header>
+                <div id="achievements-grid" class="achievements-grid">
+                </div>
+            </div>
+
             <!-- Other Pages (Laporan, Anggaran, etc.) -->
             <div id="page-laporan" class="page-hidden">
                 <header class="main-header">
@@ -161,7 +194,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="page-anggaran" class="page-hidden">
                 <header class="main-header">
                     <button class="menu-toggle" id="menu-toggle-anggaran"><i class="fas fa-bars"></i></button>
@@ -233,6 +265,11 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="rekening">Sumber/Tujuan Rekening</label>
+                        <select id="rekening" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="kategori">Kategori</label>
                         <input type="text" id="kategori" placeholder="Contoh: Makanan, Gaji" required>
                     </div>
@@ -240,8 +277,7 @@
                         <label for="deskripsi">Deskripsi (Opsional)</label>
                         <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi">
                     </div>
-                    <button type="submit" id="submitButton">Simpan Catatan</button>
-                </form>
+                    <button type="submit" id="submitButton">Simpan Catatan</button>         </form>
             </div>
         </div>
     </div>
@@ -253,6 +289,8 @@
 
     <!-- Main Script -->
     <script src="script.js"></script>
+
+    <div id="notification-container"></div>
 
 </body>
 

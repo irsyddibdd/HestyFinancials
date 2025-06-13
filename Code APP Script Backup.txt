@@ -1,0 +1,118 @@
+// ======================================================
+// KODE LENGKAP & FINAL UNTUK GOOGLE APPS SCRIPT (DIPERBAIKI)
+// ======================================================
+
+/**
+ * Fungsi ini dijalankan saat aplikasi MEMINTA (GET) data.
+ * Tugasnya adalah membaca semua data dari semua sheet dan mengirimkannya ke aplikasi.
+ */
+function doGet(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetTransaksi = ss.getSheetByName('transaksi');
+    const sheetAnggaran = ss.getSheetByName('anggaran');
+    const sheetTujuan = ss.getSheetByName('tujuan');
+
+    if (!sheetTransaksi || !sheetAnggaran || !sheetTujuan) {
+      throw new Error("Satu atau lebih nama sheet (transaksi, anggaran, tujuan) tidak ditemukan atau salah tulis.");
+    }
+
+    // Mengambil data transaksi
+    const transaksiValues = sheetTransaksi.getDataRange().getValues();
+    const transaksiData = transaksiValues.slice(1).map(function(row) {
+      return {
+        timestamp: row[0], tanggal: row[1], tipe: row[2],
+        kategori: row[3], deskripsi: row[4], jumlah: row[5]
+      };
+    });
+
+    // Mengambil data anggaran
+    const anggaranValues = sheetAnggaran.getDataRange().getValues();
+    const anggaranData = anggaranValues.slice(1).reduce(function(obj, row) {
+      if (row[0] && row[1] !== undefined) { obj[row[0]] = row[1]; }
+      return obj;
+    }, {});
+
+    // Mengambil data tujuan
+    const tujuanValues = sheetTujuan.getDataRange().getValues();
+    const tujuanData = tujuanValues.slice(1).map(function(row) {
+      return { nama: row[0], target: row[1], terkumpul: row[2] };
+    });
+    
+    // Gabungkan semua data dalam satu objek
+    const responseData = {
+      transactions: transaksiData,
+      budgets: anggaranData,
+      goals: tujuanData
+    };
+    
+    return ContentService.createTextOutput(JSON.stringify(responseData))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ result: 'error', error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+/**
+ * Fungsi ini dijalankan saat aplikasi MENGIRIM (POST) data.
+ * Tugasnya adalah menerima data dan menyimpannya ke sheet yang sesuai.
+ */
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // !!! PERUBAHAN DI SINI !!!
+    // Ambil data dari e.parameter.data karena kita mengirim via FormData
+    const data = JSON.parse(e.parameter.data); 
+    // const data = JSON.parse(e.postData.contents); // <-- Ganti baris ini
+
+    let sheet;
+    let sheetName = '';
+
+    switch(data.type) {
+      case 'add_transaction':
+        sheetName = 'transaksi';
+        sheet = ss.getSheetByName(sheetName);
+        if (!sheet) throw new Error(`Sheet dengan nama '${sheetName}' tidak ditemukan!`);
+        sheet.appendRow([ new Date(), data.payload.tanggal, data.payload.tipe, data.payload.kategori, data.payload.deskripsi, data.payload.jumlah ]);
+        break;
+      case 'add_budget':
+        sheetName = 'anggaran';
+        sheet = ss.getSheetByName(sheetName);
+        if (!sheet) throw new Error(`Sheet dengan nama '${sheetName}' tidak ditemukan!`);
+        // Pastikan data yang dikirim adalah angka
+        const budgetAmount = Number(data.payload.budget);
+        if (isNaN(budgetAmount)) {
+            throw new Error('Jumlah budget harus berupa angka.');
+        }
+        sheet.appendRow([ data.payload.kategori, budgetAmount ]);
+        break;
+      case 'add_goal':
+        sheetName = 'tujuan';
+        sheet = ss.getSheetByName(sheetName);
+        if (!sheet) throw new Error(`Sheet dengan nama '${sheetName}' tidak ditemukan!`);
+        // Pastikan target dan terkumpul adalah angka
+        const targetAmount = Number(data.payload.target);
+        const terkumpulAmount = Number(data.payload.terkumpul) || 0;
+        if (isNaN(targetAmount)) {
+            throw new Error('Target dana harus berupa angka.');
+        }
+        sheet.appendRow([ data.payload.nama, targetAmount, terkumpulAmount ]);
+        break;
+      default:
+        throw new Error("Tipe data tidak dikenal: " + data.type);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ 'result': 'success', 'type': data.type }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    // Mencatat error ke log untuk debugging
+    console.error(error.toString());
+    return ContentService.createTextOutput(JSON.stringify({ 'result': 'error', 'error': error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}

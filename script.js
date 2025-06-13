@@ -1,5 +1,5 @@
-// !!! VERSI DENGAN ANIMASI INTRO PROFESIONAL !!!
-console.log("Menjalankan script.js versi animasi intro profesional...");
+// !!! VERSI DENGAN SEMUA FITUR TERBARU !!!
+console.log("Menjalankan script.js versi final...");
 
 /**
  * ======================================================
@@ -11,21 +11,13 @@ window.addEventListener('load', function() {
     const appLayout = document.querySelector('.app-layout');
 
     if (splashScreen) {
-        // Durasi total splash screen sebelum mulai menghilang
-        const introDuration = 3000; // 3 detik
-
-        // Sembunyikan splash screen dan tampilkan aplikasi
+        const introDuration = 3000;
         setTimeout(() => {
             splashScreen.classList.add('hidden');
-            
             if (appLayout) {
                 appLayout.classList.add('visible');
             }
-
         }, introDuration);
-
-        // Hapus elemen splash screen dari DOM setelah transisi selesai
-        // Durasi intro + durasi transisi fade-out (0.5s)
         setTimeout(() => {
             splashScreen.style.display = 'none';
         }, introDuration + 500); 
@@ -33,64 +25,162 @@ window.addEventListener('load', function() {
 });
 
 
-const apsiUrl = 'https://script.google.com/macros/s/AKfycbyt5VsXRt3bouIFwdlgVwk2YAzWvEMdKNjsNgrsYhMBC2V0r-Ty6pTlhPswFFpyFZjDtQ/exec';
+const apsiUrl = 'https://script.google.com/macros/s/AKfycbyoRetC1XqViZXPV_Hptb3QF9FkxRXp1EM-ON_4CxYSNtMY4anT7ATGY_XUdFqqlArU/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
 
-let allTransactions = [], budgetData = {}, goalsData = [];
+let allTransactions = [], budgetData = {}, goalsData = [], rekeningData = [];
 let pieChart, monthlyBarChart;
-let isDataLoading = false; // Penanda untuk mencegah request data tumpang tindih
+let isDataLoading = false;
+let categoryMemory = {};
 
-document.addEventListener('DOMContentLoaded', () => { initialize_app(); });
-
-function initialize_app() {
-    setupEventListeners();
-    loadDashboardData();
-
-    // BARU: Sinkronisasi data otomatis setiap 10 detik
-    const syncInterval = 10000; // 10 detik
-    setInterval(() => {
-        console.log(`Sinkronisasi otomatis dimulai... (Interval: ${syncInterval / 1000} detik)`);
-        loadDashboardData();
-    }, syncInterval);
+/**
+ * ======================================================
+ * !!! FUNGSI BARU UNTUK KOMPRES GAMBAR SEBELUM UPLOAD !!!
+ * ======================================================
+ */
+function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = maxWidth / img.width;
+                canvas.width = maxWidth;
+                canvas.height = img.height * scale;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Mengambil data URL dari canvas dengan format dan kualitas yang ditentukan
+                const compressedDataUrl = ctx.canvas.toDataURL(file.type, quality);
+                resolve(compressedDataUrl);
+            };
+            img.onerror = error => reject(error);
+        };
+        reader.onerror = error => reject(error);
+    });
 }
 
 /**
  * ======================================================
- * !!! FUNGSI BARU UNTUK FORMAT RUPIAH OTOMATIS !!!
- * Fungsi ini dipanggil setiap kali pengguna mengetik di kolom uang.
+ * DEFINISI UNTUK SEMUA LENCANA PENCAPAIAN
  * ======================================================
  */
+const badgeDefinitions = [
+    {
+        id: 'transaksi-pertama',
+        title: 'Langkah Pertama',
+        description: 'Anda berhasil mencatat transaksi pertama Anda.',
+        icon: 'fa-shoe-prints',
+        check: (transactions, budgets, goals) => transactions.length > 0
+    },
+    {
+        id: 'rajin-mencatat',
+        title: 'Rajin Mencatat',
+        description: 'Berhasil mencatat transaksi selama 7 hari berturut-turut.',
+        icon: 'fa-calendar-check',
+        check: (transactions) => {
+            if (transactions.length < 7) return false;
+            const uniqueDates = [...new Set(transactions.map(t => new Date(t.tanggal).setHours(0,0,0,0)))];
+            uniqueDates.sort((a, b) => a - b);
+            if (uniqueDates.length < 7) return false;
+            let consecutiveDays = 1;
+            for (let i = 1; i < uniqueDates.length; i++) {
+                const dayInMillis = 24 * 60 * 60 * 1000;
+                if (uniqueDates[i] - uniqueDates[i - 1] === dayInMillis) {
+                    consecutiveDays++;
+                    if (consecutiveDays >= 7) return true;
+                } else {
+                    consecutiveDays = 1;
+                }
+            }
+            return false;
+        }
+    },
+    {
+        id: 'master-hemat',
+        title: 'Master Hemat',
+        description: 'Berhasil tetap di bawah semua anggaran selama sebulan penuh.',
+        icon: 'fa-shield-alt',
+        check: (transactions, budgets) => {
+            const now = new Date();
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const month = lastMonth.getMonth();
+            const year = lastMonth.getFullYear();
+            const spendingLastMonth = {};
+            transactions.filter(t => {
+                const d = new Date(t.tanggal);
+                return d.getMonth() === month && d.getFullYear() === year && t.tipe === 'Pengeluaran';
+            }).forEach(t => {
+                spendingLastMonth[t.kategori] = (spendingLastMonth[t.kategori] || 0) + Number(t.jumlah);
+            });
+            if (Object.keys(budgets).length === 0) return false;
+            for (const kategori in budgets) {
+                const spent = spendingLastMonth[kategori] || 0;
+                if (spent > Number(budgets[kategori])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    },
+    {
+        id: 'goal-achiever',
+        title: 'Goal Achiever',
+        description: 'Selamat! Anda berhasil mencapai salah satu tujuan tabungan Anda.',
+        icon: 'fa-bullseye',
+        check: (transactions, budgets, goals) => {
+            return goals.some(g => Number(g.terkumpul) >= Number(g.target));
+        }
+    }
+];
+
+
+document.addEventListener('DOMContentLoaded', () => { initialize_app(); });
+
+function initialize_app() {
+        // !!! LOGIKA BARU UNTUK MENERAPKAN TEMA SAAT AWAL BUKA !!!
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            if (darkModeToggle) darkModeToggle.checked = true;
+        }
+        // !!! AKHIR BLOK BARU !!!
+        // !!! TAMBAHKAN BLOK INI DI DALAM initialize_app !!!
+        const savedMemory = localStorage.getItem('categoryMemory');
+        if (savedMemory) {
+            categoryMemory = JSON.parse(savedMemory);
+        }
+        // !!! AKHIR BLOK BARU !!!
+    setupEventListeners();
+    loadDashboardData();
+    const syncInterval = 10000;
+    setInterval(() => {
+        console.log(`Sinkronisasi otomatis dimulai...`);
+        loadDashboardData();
+    }, syncInterval);
+}
+
 function formatInputRupiah(event) {
     let input = event.target;
-    
-    // 1. Simpan posisi kursor saat ini
     let cursorPosition = input.selectionStart;
     let originalLength = input.value.length;
-
-    // 2. Bersihkan nilai dari karakter non-digit (seperti titik yang sudah ada)
     let cleanValue = input.value.replace(/\D/g, '');
-
-    // 3. Jika nilainya kosong, biarkan input kosong
     if (!cleanValue) {
         input.value = '';
         return;
     }
-
-    // 4. Format angka dengan pemisah ribuan (titik)
-    // Menggunakan BigInt untuk menangani angka yang sangat besar tanpa masalah presisi
     const number = BigInt(cleanValue);
     const formattedValue = new Intl.NumberFormat('id-ID').format(number);
-
-    // 5. Setel kembali nilai input dengan yang sudah diformat
     input.value = formattedValue;
-    
-    // 6. Sesuaikan kembali posisi kursor agar tidak loncat ke akhir
     let newLength = input.value.length;
     let newCursorPosition = cursorPosition + (newLength - originalLength);
     input.setSelectionRange(newCursorPosition, newCursorPosition);
 }
 
 function formatCurrency(amount) {
-    // Pastikan amount adalah angka sebelum diformat
     const numberAmount = Number(String(amount).replace(/[^0-9]/g, '')) || 0;
     return new Intl.NumberFormat('id-ID', {
         style: 'currency', currency: 'IDR', minimumFractionDigits: 0
@@ -98,6 +188,52 @@ function formatCurrency(amount) {
 }
 
 function setupEventListeners() {
+
+        // !!! KODE BARU: Logika untuk membuka dan menutup modal bukti transaksi !!!
+        const receiptModal = document.getElementById('receipt-modal');
+        const closeReceiptModalBtn = document.getElementById('close-receipt-modal');
+        const receiptModalImg = document.getElementById('receipt-modal-img');
+        const fullHistoryBody = document.getElementById('full-history-body');
+
+            // !!! EVENT LISTENER BARU UNTUK SARAN KATEGORI !!!
+        const deskripsiInput = document.getElementById('deskripsi');
+        if (deskripsiInput) {
+        deskripsiInput.addEventListener('input', handleDescriptionInput);
+        }
+            // !!! EVENT LISTENER BARU UNTUK FILTER TANGGAL LAPORAN !!!
+        const reportFilter = document.getElementById('reportDateFilter');
+        if (reportFilter) {
+        reportFilter.addEventListener('change', updateReportView);
+        }
+    
+        if (receiptModal && fullHistoryBody) {
+        // Menggunakan event delegation untuk menangani klik pada ikon bukti
+        fullHistoryBody.addEventListener('click', function(e) {
+            const button = e.target.closest('.view-receipt-btn');
+            if (button) {
+                e.preventDefault();
+                const imgUrl = button.dataset.imgUrl;
+
+                // !!! TAMBAHKAN BARIS DI BAWAH INI !!!
+                console.log("Mencoba menampilkan URL:", imgUrl); 
+                
+                receiptModalImg.src = imgUrl;
+                receiptModal.classList.add('is-open');
+            }
+        });
+    
+            // Menutup modal
+            closeReceiptModalBtn.addEventListener('click', () => {
+                receiptModal.classList.remove('is-open');
+            });
+    
+            receiptModal.addEventListener('click', (e) => {
+                if (e.target === receiptModal) {
+                    receiptModal.classList.remove('is-open');
+                }
+            });
+        }
+
     const sidebar = document.querySelector('.sidebar');
     document.querySelectorAll('.menu-toggle').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -127,7 +263,6 @@ function setupEventListeners() {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.remove('is-open');
         });
-
         const fabOpenModalBtn = document.getElementById('fab-open-modal-btn');
         if (fabOpenModalBtn) {
             fabOpenModalBtn.addEventListener('click', () => modal.classList.add('is-open'));
@@ -161,12 +296,8 @@ function setupEventListeners() {
 
     const searchInput = document.getElementById('searchInput');
     const typeFilter = document.getElementById('typeFilter');
-    if(searchInput) {
-        searchInput.addEventListener('input', applyFiltersAndRender);
-    }
-    if(typeFilter) {
-        typeFilter.addEventListener('change', applyFiltersAndRender);
-    }
+    if(searchInput) searchInput.addEventListener('input', applyFiltersAndRender);
+    if(typeFilter) typeFilter.addEventListener('change', applyFiltersAndRender);
 
     const addBudgetForm = document.getElementById('addBudgetForm');
     if(addBudgetForm) {
@@ -174,12 +305,9 @@ function setupEventListeners() {
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const kategori = document.getElementById('budgetKategori').value;
-            // Ambil nilai bersih dari input budget
             const budget = document.getElementById('budgetAmount').value.replace(/\D/g, '');
             const data = { type: 'add_budget', payload: { kategori, budget } };
-            sendData(data, submitBtn)
-                .then(res => handleServerResponse(res))
-                .finally(() => addBudgetForm.reset());
+            sendData(data, submitBtn).then(res => handleServerResponse(res)).finally(() => addBudgetForm.reset());
         });
     }
 
@@ -189,23 +317,15 @@ function setupEventListeners() {
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const nama = document.getElementById('goalName').value;
-            // Ambil nilai bersih dari input target
             const target = document.getElementById('goalTarget').value.replace(/\D/g, '');
             const data = { type: 'add_goal', payload: { nama, target, terkumpul: 0 } };
-            sendData(data, submitBtn)
-                .then(res => handleServerResponse(res))
-                .finally(() => addGoalForm.reset());
+            sendData(data, submitBtn).then(res => handleServerResponse(res)).finally(() => addGoalForm.reset());
         });
     }
     
-    // ======================================================
-    // !!! PENERAPAN FUNGSI FORMAT RUPIAH !!!
-    // ======================================================
     const currencyInputs = document.querySelectorAll('#jumlah, #budgetAmount, #goalTarget');
     currencyInputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', formatInputRupiah);
-        }
+        if (input) input.addEventListener('input', formatInputRupiah);
     });
 }
 
@@ -216,26 +336,43 @@ function handleFormSubmit(e) {
 
     const payload = {
         tanggal: document.getElementById('tanggal').value,
-        // Ambil nilai bersih dari input jumlah sebelum dikirim
         jumlah: document.getElementById('jumlah').value.replace(/\D/g, ''),
         tipe: document.getElementById('tipe').value,
+        rekening: document.getElementById('rekening').value,
         kategori: document.getElementById('kategori').value,
         deskripsi: document.getElementById('deskripsi').value,
     };
-    
+
     const data = { type: 'add_transaction', payload };
-    
-    sendData(data, submitButton)
-        .then(res => handleServerResponse(res, modal));
+
+    sendData(data, submitButton).then(res => handleServerResponse(res, modal, payload));
 }
 
-function handleServerResponse(response, modalToClose = null) {
+// Ganti fungsi handleServerResponse Anda dengan ini
+function handleServerResponse(response, modalToClose = null, transactionPayload = null) {
     console.log("Menerima respons dari server:", response);
     if (response.result === 'success') {
-        if(modalToClose) modalToClose.classList.remove('is-open');
+        if (modalToClose) modalToClose.classList.remove('is-open');
+        showNotification('✅ Transaksi berhasil dicatat!');
+
+        // !!! BLOK "BELAJAR" BARU !!!
+        if (transactionPayload && transactionPayload.deskripsi) {
+            const keywords = transactionPayload.deskripsi.toLowerCase().split(' ');
+            keywords.forEach(keyword => {
+                // Hanya simpan kata kunci yang cukup panjang (menghindari kata seperti 'di', 'ke')
+                if (keyword.length > 2) {
+                    categoryMemory[keyword] = transactionPayload.kategori;
+                }
+            });
+            // Simpan memori baru ke localStorage
+            localStorage.setItem('categoryMemory', JSON.stringify(categoryMemory));
+            console.log("Memori kategori diperbarui:", categoryMemory);
+        }
+        // !!! AKHIR BLOK BARU !!!
+
         loadDashboardData();
     } else {
-        alert(response.error || 'Terjadi kesalahan pada server.');
+        showNotification(`❌ Gagal: ${response.error || 'Terjadi kesalahan'}`, 'error');
         console.error('Server Error:', response.error);
     }
 }
@@ -265,25 +402,24 @@ function sendData(data, submitButton = null) {
     .finally(() => {
         if (submitButton) {
             submitButton.disabled = false;
-            submitButton.innerText = originalButtonText;
+            submitButton.innerText = 'Simpan Catatan';
         }
     });
 }
 
 async function loadDashboardData() {
-    // Cek jika sedang dalam proses memuat data, batalkan request baru.
     if (isDataLoading) {
         console.log("Pembatalan: Proses pemuatan data lain sedang berjalan.");
         return;
     }
     
     console.log("Mencoba mengambil data...");
-    isDataLoading = true; // Set penanda ke true
+    isDataLoading = true;
 
     try {
         const response = await fetch(apsiUrl);
         if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
-        const { transactions, budgets, goals } = await response.json();
+        const { transactions, budgets, goals, rekening } = await response.json();
         
         const validTransactions = (transactions || []).filter(trx => trx && trx.tanggal);
         validTransactions.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
@@ -291,9 +427,11 @@ async function loadDashboardData() {
         allTransactions = [...validTransactions];
         budgetData = budgets || {};
         goalsData = goals || [];
+        rekeningData = rekening || [];
         
         // Render semua komponen UI dengan data baru
-        processSummary(allTransactions);
+        populateRekeningDropdown();
+        processSummary(allTransactions, rekeningData);
         displayRecentTransactions(allTransactions);
         applyFiltersAndRender();
         renderCharts(allTransactions);
@@ -301,14 +439,131 @@ async function loadDashboardData() {
         displayBudgets();
         displayGoals();
         displaySettingsLists();
+        displayAndCheckAchievements();
+        updateReportView();
         
     } catch (error) {
         console.error('Gagal memuat data:', error);
     } finally {
-        isDataLoading = false; // Set penanda kembali ke false setelah selesai
+        isDataLoading = false;
         console.log("Proses pemuatan data selesai.");
     }
 }
+
+function populateRekeningDropdown() {
+    const rekeningSelect = document.getElementById('rekening');
+    if (!rekeningSelect) return;
+
+    rekeningSelect.innerHTML = '';
+
+    if (rekeningData && rekeningData.length > 0) {
+        rekeningData.forEach(rek => {
+            const option = document.createElement('option');
+            option.value = rek.Nama.trim(); // .trim() untuk hapus spasi
+            option.textContent = `${rek.Nama.trim()} (${formatCurrency(rek.Saldo)})`;
+            rekeningSelect.appendChild(option);
+        });
+    } else {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "Tidak ada rekening";
+        rekeningSelect.appendChild(option);
+    }
+}
+
+function processSummary(transactions, rekening) {
+    const totalSaldoUtamaEl = document.getElementById('total-saldo-utama');
+    const rekeningBreakdownEl = document.getElementById('rekening-breakdown');
+    
+    let totalSaldo = 0;
+    if (rekening && rekening.length > 0) {
+        rekening.forEach(rek => {
+            totalSaldo += Number(rek.Saldo) || 0;
+        });
+
+        rekeningBreakdownEl.innerHTML = rekening.map(rek => `
+            <div class="rekening-item">
+                <span class="name">${rek.Nama}</span>
+                <span class="amount">${formatCurrency(rek.Saldo)}</span>
+            </div>
+        `).join('');
+    }
+    totalSaldoUtamaEl.innerText = formatCurrency(totalSaldo);
+
+    const cashflowPemasukanEl = document.getElementById('cashflow-pemasukan');
+    const cashflowPengeluaranEl = document.getElementById('cashflow-pengeluaran');
+    const barPemasukanEl = document.getElementById('cashflow-bar-pemasukan');
+    const barPengeluaranEl = document.getElementById('cashflow-bar-pengeluaran');
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    let pemasukanBulanIni = 0, pengeluaranBulanIni = 0;
+
+    transactions.forEach(trx => {
+        const jumlah = Number(trx.jumlah) || 0;
+        const trxDate = new Date(trx.tanggal);
+        if (isNaN(trxDate)) return;
+
+        if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
+            if (trx.tipe === 'Pemasukan') {
+                pemasukanBulanIni += jumlah;
+            } else {
+                pengeluaranBulanIni += jumlah;
+            }
+        }
+    });
+
+    cashflowPemasukanEl.innerText = formatCurrency(pemasukanBulanIni);
+    cashflowPengeluaranEl.innerText = formatCurrency(pengeluaranBulanIni);
+
+    const totalCashflow = pemasukanBulanIni + pengeluaranBulanIni;
+    if (totalCashflow > 0) {
+        barPemasukanEl.style.width = `${(pemasukanBulanIni / totalCashflow) * 100}%`;
+        barPengeluaranEl.style.width = `${(pengeluaranBulanIni / totalCashflow) * 100}%`;
+    } else {
+        barPemasukanEl.style.width = '0%';
+        barPengeluaranEl.style.width = '0%';
+    }
+
+    renderFinancialCalendar(transactions, now);
+}
+
+
+function displayAndCheckAchievements() {
+    const grid = document.getElementById('achievements-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    badgeDefinitions.forEach(badge => {
+        const isUnlocked = badge.check(allTransactions, budgetData, goalsData);
+        const card = document.createElement('div');
+        card.className = 'badge-card';
+        if (!isUnlocked) {
+            card.classList.add('locked');
+        }
+        card.innerHTML = `
+            <div class="badge-icon"><i class="fas ${badge.icon}"></i></div>
+            <h3 class="badge-title">${badge.title}</h3>
+            <p class="badge-description">${badge.description}</p>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    container.appendChild(notification);
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// ... Sisa fungsi-fungsi lain yang sudah ada ...
+// (Saya salin dari file asli Anda agar tidak ada yang terlewat)
 
 function displaySettingsLists() {
     const budgetList = document.getElementById('budgetList');
@@ -360,41 +615,8 @@ function applyFiltersAndRender() {
 
 function navigateTo(pageId) {
     document.querySelectorAll('.main-content > div[id^="page-"]').forEach(page => {
-        if (page.id === pageId) {
-            page.classList.remove('page-hidden');
-        } else {
-            page.classList.add('page-hidden');
-        }
+        page.style.display = (page.id === pageId) ? 'block' : 'none';
     });
-}
-
-function processSummary(transactions) {
-    const totalSaldoEl = document.getElementById('total-saldo');
-    const totalPemasukanEl = document.getElementById('total-pemasukan');
-    const totalPengeluaranEl = document.getElementById('total-pengeluaran');
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    let totalPemasukan = 0, totalPengeluaran = 0, pemasukanBulanIni = 0, pengeluaranBulanIni = 0;
-    transactions.forEach(trx => {
-        const jumlah = Number(trx.jumlah) || 0;
-        const trxDate = new Date(trx.tanggal);
-        if (isNaN(trxDate)) return;
-        if (trx.tipe === 'Pemasukan') {
-            totalPemasukan += jumlah;
-            if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
-                pemasukanBulanIni += jumlah;
-            }
-        } else {
-            totalPengeluaran += jumlah;
-            if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
-                pengeluaranBulanIni += jumlah;
-            }
-        }
-    });
-    totalSaldoEl.innerText = formatCurrency(totalPemasukan - totalPengeluaran);
-    totalPemasukanEl.innerText = formatCurrency(pemasukanBulanIni);
-    totalPengeluaranEl.innerText = formatCurrency(pengeluaranBulanIni);
 }
 
 function displayRecentTransactions(transactions) {
@@ -436,7 +658,7 @@ function displayFullHistory(transactions) {
     fullHistoryBody.innerHTML = '';
 
     if (transactions.length === 0) {
-        fullHistoryBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada transaksi yang cocok.</td></tr>';
+        fullHistoryBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tidak ada transaksi yang cocok.</td></tr>';
         return;
     }
 
@@ -444,7 +666,11 @@ function displayFullHistory(transactions) {
         const row = document.createElement('tr');
         const isIncome = trx.tipe === 'Pemasukan';
         
-        // Penambahan atribut data-label
+        // !!! BARU: Tambahkan ikon jika ada link bukti !!!
+        const receiptIcon = trx.link_bukti 
+            ? `<a href="#" class="view-receipt-btn" data-img-url="${trx.link_bukti}"><i class="fas fa-paperclip"></i></a>` 
+            : '';
+
         row.innerHTML = `
             <td data-label="Tanggal">${new Date(trx.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</td>
             <td data-label="Kategori">${trx.kategori}</td>
@@ -452,6 +678,7 @@ function displayFullHistory(transactions) {
             <td data-label="Jumlah" class="${isIncome ? 'jumlah-pemasukan' : 'jumlah-pengeluaran'}">
                 ${formatCurrency(trx.jumlah)}
             </td>
+            <td data-label="Bukti" style="text-align: center;">${receiptIcon}</td>
         `;
         fullHistoryBody.appendChild(row);
     });
@@ -497,6 +724,56 @@ function renderCharts(transactions) {
     });
 }
 
+function renderFinancialCalendar(transactions, date) {
+    const grid = document.getElementById('financial-calendar-grid');
+    const monthYearEl = document.getElementById('calendar-month-year');
+    if (!grid || !monthYearEl) return;
+
+    grid.innerHTML = '';
+    const month = date.getMonth();
+    const year = date.getFullYear();
+
+    monthYearEl.textContent = new Date(year, month).toLocaleDateString('id-ID', {
+        month: 'long', year: 'numeric'
+    });
+
+    const monthlyTransactions = {};
+    transactions.forEach(trx => {
+        const trxDate = new Date(trx.tanggal);
+        if(trxDate.getMonth() === month && trxDate.getFullYear() === year) {
+            const day = trxDate.getDate();
+            if(!monthlyTransactions[day]) {
+                monthlyTransactions[day] = { income: false, expense: false };
+            }
+            if (trx.tipe === 'Pemasukan') monthlyTransactions[day].income = true;
+            if (trx.tipe === 'Pengeluaran') monthlyTransactions[day].expense = true;
+        }
+    });
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDayOfMonth; i++) {
+        grid.innerHTML += `<div class="calendar-day empty"></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        let dotsHtml = '';
+        if (monthlyTransactions[day]) {
+            dotsHtml += '<div class="dots-wrapper">';
+            if (monthlyTransactions[day].income) {
+                dotsHtml += '<div class="dot income"></div>';
+            }
+            if (monthlyTransactions[day].expense) {
+                dotsHtml += '<div class="dot expense"></div>';
+            }
+            dotsHtml += '</div>';
+        }
+        grid.innerHTML += `<div class="calendar-day">${day}${dotsHtml}</div>`;
+    }
+}
+
+
 function renderReportCharts(transactions) {
     const reportChartCanvas = document.getElementById('monthlyBarChart');
     if (monthlyBarChart) monthlyBarChart.destroy();
@@ -519,9 +796,7 @@ function renderReportCharts(transactions) {
     });
 
     let sortedMonths = Object.keys(monthlyData).sort();
-
     if (sortedMonths.length === 0) return;
-
     if (sortedMonths.length === 1) {
         const singleMonthKey = sortedMonths[0];
         const [year, month] = singleMonthKey.split('-').map(Number);
@@ -563,35 +838,22 @@ function renderReportCharts(transactions) {
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            if (value >= 1000000000) return 'Rp ' + (value / 1000000000).toLocaleString('id-ID') + ' M';
-                            if (value >= 1000000) return 'Rp ' + (value / 1000000).toLocaleString('id-ID') + ' Jt';
-                            if (value >= 1000) return 'Rp ' + (value / 1000).toLocaleString('id-ID') + ' Rb';
-                            return 'Rp ' + value;
-                        }
-                    }
-                }
-            },
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { callback: function(value) {
+                if (value >= 1e9) return 'Rp ' + (value / 1e9).toLocaleString('id-ID') + ' M';
+                if (value >= 1e6) return 'Rp ' + (value / 1e6).toLocaleString('id-ID') + ' Jt';
+                if (value >= 1e3) return 'Rp ' + (value / 1e3).toLocaleString('id-ID') + ' Rb';
+                return 'Rp ' + value;
+            }}}},
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: context => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
-                    }
-                },
-                legend: {
-                    position: isMobile ? 'bottom' : 'top',
-                }
+                tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}` } },
+                legend: { position: isMobile ? 'bottom' : 'top' }
             }
         }
     });
 }
 
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
 function displayBudgets() {
     const budgetContainer = document.getElementById('budget-container');
     if (!budgetContainer) return;
@@ -608,11 +870,15 @@ function displayBudgets() {
     }).forEach(trx => {
         spendingThisMonth[trx.kategori] = (spendingThisMonth[trx.kategori] || 0) + Number(trx.jumlah);
     });
-    for (const kategori in budgetData) {
-        const budgetAmount = Number(budgetData[kategori]) || 0;
+
+    const budgetEntries = Object.entries(budgetData);
+
+    budgetEntries.forEach(([kategori, budgetAmountValue], index) => {
+        const budgetAmount = Number(budgetAmountValue) || 0;
         const spentAmount = spendingThisMonth[kategori] || 0;
         const percentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
         let pClass = percentage > 90 ? 'danger' : percentage > 70 ? 'warning' : 'safe';
+        
         const card = document.createElement('div');
         card.className = 'card budget-card';
         card.innerHTML = `
@@ -621,12 +887,18 @@ function displayBudgets() {
                 <span class="percent ${pClass}">${Math.round(percentage)}%</span>
             </div>
             <div class="budget-card-amount"><strong>${formatCurrency(spentAmount)}</strong> / ${formatCurrency(budgetAmount)}</div>
-            <div class="progress-bar-container"><div class="progress-bar ${pClass}" style="width: ${Math.min(percentage, 100)}%;"></div></div>
+            <div class="progress-bar-container"><div class="progress-bar ${pClass}" style="width: 0%;"></div></div>
         `;
         budgetContainer.appendChild(card);
-    }
+
+        const progressBar = card.querySelector('.progress-bar');
+        setTimeout(() => {
+            progressBar.style.width = `${Math.min(percentage, 100)}%`;
+        }, 100 * (index + 1));
+    });
 }
 
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
 function displayGoals() {
     const goalsContainer = document.getElementById('goals-container');
     if (!goalsContainer) return;
@@ -635,18 +907,87 @@ function displayGoals() {
         goalsContainer.innerHTML = '<div class="card"><p>Belum ada tujuan yang dibuat. Buat di halaman Pengaturan.</p></div>';
         return;
     }
-    goalsData.forEach(goal => {
+    goalsData.forEach((goal, index) => {
         const targetAmount = Number(goal.target) || 0;
         const savedAmount = Number(goal.terkumpul) || 0;
         const percentage = targetAmount > 0 ? (savedAmount / targetAmount) * 100 : 0;
+        
         const card = document.createElement('div');
         card.className = 'card goal-card';
         card.innerHTML = `
             <h3>${goal.nama}</h3>
             <div class="goal-card-amount"><strong>${formatCurrency(savedAmount)}</strong> / ${formatCurrency(targetAmount)}</div>
-            <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;"></div></div>
+            <div class="progress-bar-container"><div class="progress-bar" style="width: 0%;"></div></div>
             <p>${Math.round(percentage)}% tercapai</p>
         `;
         goalsContainer.appendChild(card);
+
+        const progressBar = card.querySelector('.progress-bar');
+        setTimeout(() => {
+            progressBar.style.width = `${Math.min(percentage, 100)}%`;
+        }, 100 * (index + 1));
     });
+}
+/**
+ * ======================================================
+ * !!! FUNGSI BARU UNTUK MEMBERI SARAN KATEGORI OTOMATIS !!!
+ * ======================================================
+ */
+function handleDescriptionInput(e) {
+    const deskripsi = e.target.value.toLowerCase();
+    const kategoriInput = document.getElementById('kategori');
+    const keywords = deskripsi.split(' ');
+
+    // Cari dari kata terakhir untuk saran yang lebih relevan
+    for (let i = keywords.length - 1; i >= 0; i--) {
+        const keyword = keywords[i];
+        if (categoryMemory[keyword]) {
+            kategoriInput.value = categoryMemory[keyword];
+            // Beri sedikit efek visual bahwa ini adalah saran
+            kategoriInput.style.backgroundColor = '#f0eaf7'; 
+            setTimeout(() => {
+                kategoriInput.style.backgroundColor = '';
+            }, 1000);
+            return; // Hentikan setelah menemukan saran pertama
+        }
+    }
+}
+
+// Tambahkan fungsi baru ini di mana saja di script.js
+/**
+ * ======================================================
+ * !!! FUNGSI BARU UNTUK MEMFILTER DAN MERENDER ULANG LAPORAN !!!
+ * ======================================================
+ */
+function updateReportView() {
+    const filterValue = document.getElementById('reportDateFilter').value;
+    const now = new Date();
+    let startDate = new Date();
+    
+    // Tentukan rentang tanggal berdasarkan pilihan filter
+    switch (filterValue) {
+        case 'last_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            break;
+        case 'last_3_months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            break;
+        case 'all_time':
+            // Gunakan tanggal yang sangat lampau untuk mencakup semua data
+            startDate = new Date(1970, 0, 1); 
+            break;
+        case 'this_month':
+        default:
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+    }
+
+    // Filter transaksi berdasarkan rentang tanggal
+    const filteredTransactions = allTransactions.filter(trx => {
+        const trxDate = new Date(trx.tanggal);
+        return trxDate >= startDate;
+    });
+
+    // Render ulang chart dengan data yang sudah difilter
+    renderReportCharts(filteredTransactions);
 }
