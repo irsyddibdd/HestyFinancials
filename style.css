@@ -427,7 +427,16 @@ html {
     background-color: rgba(30, 41, 59, 0.5);
     display: flex;
     justify-content: center;
-    align-items: center;
+
+    /* PERUBAHAN 1: Posisikan modal di atas, bukan di tengah vertikal */
+    align-items: flex-start;
+
+    /* PERUBAHAN 2: Aktifkan scroll vertikal JIKA konten lebih tinggi dari layar */
+    overflow-y: auto;
+
+    /* PERUBAHAN 3: Beri sedikit jarak atas-bawah agar tidak menempel di tepi layar */
+    padding: 2rem 0;
+
     z-index: 2000;
     opacity: 0;
     visibility: hidden;
