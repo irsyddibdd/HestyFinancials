@@ -32,34 +32,36 @@
     box-sizing: border-box;
 }
 
+/* GANTI ATURAN BODY YANG LAMA DENGAN INI */
 body {
-    position: relative;
     font-family: 'Poppins', sans-serif;
     color: var(--text-primary);
+
+    /* Jadikan body sebagai kontainer scroll utama */
+    height: 100%;
+    overflow-y: scroll;
+    /* Izinkan scrolling vertikal hanya pada body */
+    overflow-x: hidden;
+    /* Cegah scrolling horizontal yang tidak diinginkan */
+
+    /* Properti ini meningkatkan pengalaman scroll di perangkat iOS */
+    -webkit-overflow-scrolling: touch;
 }
 
-body::before {
-    content: '';
-    position: fixed;
-    /* Kunci utama: elemen ini fixed, bukan background-nya */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    /* Triknya di sini: kita gunakan multiple background.
-       Layer pertama adalah overlay warna, dan layer kedua adalah gambar Anda. */
+/* TAMBAHKAN BLOK BARU INI */
+html {
+    /* Menetapkan gambar dan overlay pada elemen paling luar */
     background:
-        /* Layer 1: Overlay warna gelap (gradien dari warna solid ke warna solid) */
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
-        /* Layer 2: Gambar Anda */
         url('rapunzel.jpg') no-repeat center center;
 
-    /* Terapkan background-size ke semua layer (terutama gambar) */
+    /* Gunakan background-attachment: fixed di sini */
+    background-attachment: fixed;
     background-size: cover;
 
-    /* Pastikan pseudo-element ini berada di belakang semua konten lain */
-    z-index: -1;
+    /* Penting: Cegah html dari scrolling, biarkan body yang melakukannya */
+    height: 100%;
+    overflow: hidden;
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
