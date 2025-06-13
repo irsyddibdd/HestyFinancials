@@ -53,181 +53,6 @@ function initialize_app() {
     }, syncInterval);
 }
 
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-    }).format(amount);
-}
-
-/**
- * !!! FUNGSI DIPERBARUI !!!
- * Menambahkan event listener untuk semua elemen interaktif, termasuk form anggaran dan tujuan.
- */
-function setupEventListeners() {
-    const sidebar = document.querySelector('.sidebar');
-    document.querySelectorAll('.menu-toggle').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebar.classList.toggle('is-open');
-        });
-    });
-    document.addEventListener('click', function(event) {
-        const menuToggle = document.querySelector('.menu-toggle');
-        if (menuToggle && sidebar.classList.contains('is-open') && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-            sidebar.classList.remove('is-open');
-        }
-    });
-    const form = document.getElementById('transactionForm');
-    if (form) {
-        document.getElementById('tanggal').valueAsDate = new Date();
-        form.addEventListener('submit', handleFormSubmit);
-    }
-    const modal = document.getElementById('transaction-modal');
-    const openModalBtn = document.getElementById('open-modal-btn');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    if (modal && openModalBtn && closeModalBtn) {
-        openModalBtn.addEventListener('click', () => modal.classList.add('is-open'));
-        closeModalBtn.addEventListener('click', () => modal.classList.remove('is-open'));
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.classList.remove('is-open');
-        });
-    }
-    const navLinks = document.querySelectorAll('.sidebar-nav a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const pageId = e.currentTarget.dataset.page;
-            if (!pageId) return;
-            navigateTo(pageId);
-            navLinks.forEach(l => l.parentElement.classList.remove('active'));
-            e.currentTarget.parentElement.classList.add('active');
-            if (sidebar.classList.contains('is-open')) {
-                sidebar.classList.remove('is-open');
-            }
-        });
-    });
-    const viewAllLink = document.querySelector('.view-all');
-    if(viewAllLink) {
-        viewAllLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo('page-riwayat');
-            document.querySelector('.sidebar-nav li.active').classList.remove('active');
-            document.querySelector('.sidebar-nav a[data-page="page-riwayat"]').parentElement.classList.add('active');
-        });
-    }
-    const searchInput = document.getElementById('searchInput');
-    const typeFilter = document.getElementById('typeFilter');
-    if(searchInput) {
-        searchInput.addEventListener('input', applyFiltersAndRender);
-    }
-    if(typeFilter) {
-        typeFilter.addEventListener('change', applyFiltersAndRender);
-    }
-
-    // Event listener untuk form tambah anggaran
-    const addBudgetForm = document.getElementById('addBudgetForm');
-    if(addBudgetForm) {
-        addBudgetForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const kategori = document.getElementById('budgetKategori').value;
-            const budget = document.getElementById('budgetAmount').value;
-            const data = { type: 'add_budget', payload: { kategori, budget } };
-            sendData(data, submitBtn)
-                .then(res => handleServerResponse(res))
-                .finally(() => addBudgetForm.reset());
-        });
-    }
-
-    // Event listener untuk form tambah tujuan
-    const addGoalForm = document.getElementById('addGoalForm');
-    if(addGoalForm) {
-        addGoalForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const nama = document.getElementById('goalName').value;
-            const target = document.getElementById('goalTarget').value;
-            const data = { type: 'add_goal', payload: { nama, target, terkumpul: 0 } };
-            sendData(data, submitBtn)
-                .then(res => handleServerResponse(res))
-                .finally(() => addGoalForm.reset());
-        });
-    }
-}
-
-/**
- * !!! FUNGSI DIPERBARUI !!!
- * Mengirim data ke Google Apps Script dan mengelola status UI tombol submit.
- * @param {object} data Objek data yang akan dikirim.
- * @param {HTMLElement} [submitButton=null] Tombol submit yang memicu aksi ini.
- * @returns {Promise<object>} Promise yang akan resolve dengan respons JSON dari server.
- */
-
-/**
- * !!! FUNGSI DIPERBARUI !!!
- * Menangani submit form transaksi utama.
- */
-
-function navigateTo(pageId) {
-    document.querySelectorAll('.main-content > div[id^="page-"]').forEach(page => {
-        if (page.id === pageId) {
-            page.classList.remove('page-hidden');
-        } else {
-            page.classList.add('page-hidden');
-        }
-    });
-}
-
-function renderCharts(transactions) {
-    const pieChartCanvas = document.getElementById('pieChart');
-    if (pieChart) pieChart.destroy();
-    if (!pieChartCanvas) return;
-
-    const expenseData = {};
-    transactions.filter(t => t.tipe === 'Pengeluaran').forEach(trx => {
-        const jumlah = Number(trx.jumlah) || 0;
-        if (expenseData[trx.kategori]) {
-            expenseData[trx.kategori] += jumlah;
-        } else {
-            expenseData[trx.kategori] = jumlah;
-        }
-    });
-
-    if (Object.keys(expenseData).length === 0) {
-        const ctx = pieChartCanvas.getContext('2d');
-        ctx.clearRect(0, 0, pieChartCanvas.width, pieChartCanvas.height);
-        return;
-    }
-
-    pieChart = new Chart(pieChartCanvas, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(expenseData),
-            datasets: [{
-                label: 'Pengeluaran',
-                data: Object.values(expenseData),
-                backgroundColor: ['#d946ef', '#c026d3', '#a21caf', '#86198f', '#701a75', '#ec4899', '#db2777'],
-                borderColor: '#ffffff',
-                borderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        font: {
-                            family: "'Poppins', sans-serif"
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
 /**
  * ======================================================
  * !!! FUNGSI BARU UNTUK FORMAT RUPIAH OTOMATIS !!!
@@ -402,221 +227,6 @@ function handleFormSubmit(e) {
     
     sendData(data, submitButton)
         .then(res => handleServerResponse(res, modal));
-}
-
-// Sisa fungsi lainnya (sendData, loadDashboardData, dll.) tetap sama
-// ... (Kode dari sebelumnya) ...
-function handleServerResponse(response, modalToClose = null) {
-    console.log("Menerima respons dari server:", response);
-    if (response.result === 'success') {
-        if(modalToClose) modalToClose.classList.remove('is-open');
-        loadDashboardData();
-    } else {
-        alert(response.error || 'Terjadi kesalahan pada server.');
-        console.error('Server Error:', response.error);
-    }
-}
-
-function sendData(data, submitButton = null) {
-    console.log("Mengirim data ke server:", data);
-    const formData = new FormData();
-    formData.append('data', JSON.stringify(data));
-    let originalButtonText = '';
-    if (submitButton) {
-        originalButtonText = submitButton.innerText;
-        submitButton.disabled = true;
-        submitButton.innerText = 'Menyimpan...';
-    }
-    return fetch(apsiUrl, {
-        method: 'POST',
-        body: formData,
-    })
-    .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-    })
-    .catch(error => {
-        console.error('Error saat mengirim data:', error);
-        alert('Oops! Terjadi kesalahan saat mengirim data. Silakan coba lagi.');
-        return { result: 'error', error: error.message };
-    })
-    .finally(() => {
-        if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.innerText = originalButtonText;
-        }
-    });
-}
-
-async function loadDashboardData() {
-    console.log("Mencoba mengambil data...");
-    try {
-        const response = await fetch(apsiUrl);
-        if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
-        const { transactions, budgets, goals } = await response.json();
-        const validTransactions = (transactions || []).filter(trx => trx && trx.tanggal);
-        validTransactions.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-        allTransactions = [...validTransactions];
-        budgetData = budgets || {};
-        goalsData = goals || [];
-        processSummary(allTransactions);
-        displayRecentTransactions(allTransactions);
-        applyFiltersAndRender();
-        renderCharts(allTransactions);
-        renderReportCharts(allTransactions);
-        displayBudgets();
-        displayGoals();
-        displaySettingsLists();
-    } catch (error) {
-        console.error('Gagal memuat data:', error);
-    }
-}
-
-function displaySettingsLists() {
-    const budgetList = document.getElementById('budgetList');
-    const goalList = document.getElementById('goalList');
-    if (budgetList) {
-        budgetList.innerHTML = '';
-        if (Object.keys(budgetData).length > 0) {
-            for (const kategori in budgetData) {
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${kategori}</span> <strong>${formatCurrency(budgetData[kategori])}</strong>`;
-                budgetList.appendChild(li);
-            }
-        } else {
-            budgetList.innerHTML = '<li>Belum ada budget dibuat.</li>';
-        }
-    }
-    if (goalList) {
-        goalList.innerHTML = '';
-        if (goalsData.length > 0) {
-            goalsData.forEach(goal => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${goal.nama}</span> <strong>${formatCurrency(goal.target)}</strong>`;
-                goalList.appendChild(li);
-            });
-        } else {
-            goalList.innerHTML = '<li>Belum ada tujuan dibuat.</li>';
-        }
-    }
-}
-
-function applyFiltersAndRender() {
-    const searchInput = document.getElementById('searchInput');
-    const typeFilter = document.getElementById('typeFilter');
-    if (!searchInput || !typeFilter) return;
-    const searchTerm = searchInput.value.toLowerCase();
-    const typeValue = typeFilter.value;
-    let filteredTransactions = [...allTransactions];
-    if (typeValue !== 'semua') {
-        filteredTransactions = filteredTransactions.filter(trx => trx.tipe === typeValue);
-    }
-    if (searchTerm) {
-        filteredTransactions = filteredTransactions.filter(trx =>
-            trx.kategori.toLowerCase().includes(searchTerm) ||
-            (trx.deskripsi && trx.deskripsi.toLowerCase().includes(searchTerm))
-        );
-    }
-    displayFullHistory(filteredTransactions);
-}
-
-function navigateTo(pageId) {
-    document.querySelectorAll('.main-content > div[id^="page-"]').forEach(page => {
-        if (page.id === pageId) {
-            page.classList.remove('page-hidden');
-        } else {
-            page.classList.add('page-hidden');
-        }
-    });
-}
-
-function processSummary(transactions) {
-    const totalSaldoEl = document.getElementById('total-saldo');
-    const totalPemasukanEl = document.getElementById('total-pemasukan');
-    const totalPengeluaranEl = document.getElementById('total-pengeluaran');
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    let totalPemasukan = 0, totalPengeluaran = 0, pemasukanBulanIni = 0, pengeluaranBulanIni = 0;
-    transactions.forEach(trx => {
-        const jumlah = Number(trx.jumlah) || 0;
-        const trxDate = new Date(trx.tanggal);
-        if (isNaN(trxDate)) return;
-        if (trx.tipe === 'Pemasukan') {
-            totalPemasukan += jumlah;
-            if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
-                pemasukanBulanIni += jumlah;
-            }
-        } else {
-            totalPengeluaran += jumlah;
-            if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
-                pengeluaranBulanIni += jumlah;
-            }
-        }
-    });
-    totalSaldoEl.innerText = formatCurrency(totalPemasukan - totalPengeluaran);
-    totalPemasukanEl.innerText = formatCurrency(pemasukanBulanIni);
-    totalPengeluaranEl.innerText = formatCurrency(pengeluaranBulanIni);
-}
-
-function displayRecentTransactions(transactions) {
-    const transactionHistoryBody = document.getElementById('transactionHistoryBody');
-    if(!transactionHistoryBody) return;
-    transactionHistoryBody.innerHTML = '';
-    const recentTransactions = transactions.slice(0, 5);
-    if (recentTransactions.length === 0) {
-        transactionHistoryBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Belum ada data</td></tr>';
-        return;
-    }
-    recentTransactions.forEach(trx => {
-        const row = document.createElement('tr');
-        row.classList.add('recent-transaction-item');
-        const isIncome = trx.tipe === 'Pemasukan';
-        row.innerHTML = `
-            <td>
-                <div class="transaction-info">
-                    <div class="transaction-icon ${isIncome ? 'icon-income' : 'icon-expense'}">
-                        <i class="fas ${isIncome ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
-                    </div>
-                    <div class="transaction-details">
-                        <strong class="transaction-category">${trx.kategori}</strong>
-                        <span class="transaction-date">${new Date(trx.tanggal).toLocaleDateString('id-ID')}</span>
-                    </div>
-                </div>
-            </td>
-            <td class="transaction-amount ${isIncome ? 'jumlah-pemasukan' : 'jumlah-pengeluaran'}">
-                ${isIncome ? '+' : '-'} ${formatCurrency(trx.jumlah)}
-            </td>
-        `;
-        transactionHistoryBody.appendChild(row);
-    });
-}
-
-function displayFullHistory(transactions) {
-    const fullHistoryBody = document.getElementById('full-history-body');
-    if (!fullHistoryBody) return;
-    fullHistoryBody.innerHTML = '';
-
-    if (transactions.length === 0) {
-        fullHistoryBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada transaksi yang cocok.</td></tr>';
-        return;
-    }
-
-    transactions.forEach(trx => {
-        const row = document.createElement('tr');
-        const isIncome = trx.tipe === 'Pemasukan';
-        
-        // Penambahan atribut data-label
-        row.innerHTML = `
-            <td data-label="Tanggal">${new Date(trx.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</td>
-            <td data-label="Kategori">${trx.kategori}</td>
-            <td data-label="Deskripsi">${trx.deskripsi || '-'}</td>
-            <td data-label="Jumlah" class="${isIncome ? 'jumlah-pemasukan' : 'jumlah-pengeluaran'}">
-                ${formatCurrency(trx.jumlah)}
-            </td>
-        `;
-        fullHistoryBody.appendChild(row);
-    });
 }
 
 function handleServerResponse(response, modalToClose = null) {
@@ -820,6 +430,33 @@ function displayRecentTransactions(transactions) {
     });
 }
 
+function displayFullHistory(transactions) {
+    const fullHistoryBody = document.getElementById('full-history-body');
+    if (!fullHistoryBody) return;
+    fullHistoryBody.innerHTML = '';
+
+    if (transactions.length === 0) {
+        fullHistoryBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada transaksi yang cocok.</td></tr>';
+        return;
+    }
+
+    transactions.forEach(trx => {
+        const row = document.createElement('tr');
+        const isIncome = trx.tipe === 'Pemasukan';
+        
+        // Penambahan atribut data-label
+        row.innerHTML = `
+            <td data-label="Tanggal">${new Date(trx.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</td>
+            <td data-label="Kategori">${trx.kategori}</td>
+            <td data-label="Deskripsi">${trx.deskripsi || '-'}</td>
+            <td data-label="Jumlah" class="${isIncome ? 'jumlah-pemasukan' : 'jumlah-pengeluaran'}">
+                ${formatCurrency(trx.jumlah)}
+            </td>
+        `;
+        fullHistoryBody.appendChild(row);
+    });
+}
+
 function renderCharts(transactions) {
     const pieChartCanvas = document.getElementById('pieChart');
     if (pieChart) pieChart.destroy();
@@ -860,10 +497,6 @@ function renderCharts(transactions) {
     });
 }
 
-/**
- * !!! FUNGSI DIPERBARUI !!!
- * Merender grafik laporan bulanan dengan penyesuaian untuk tampilan mobile.
- */
 function renderReportCharts(transactions) {
     const reportChartCanvas = document.getElementById('monthlyBarChart');
     if (monthlyBarChart) monthlyBarChart.destroy();
@@ -907,7 +540,6 @@ function renderReportCharts(transactions) {
     const pemasukanData = sortedMonths.map(monthKey => monthlyData[monthKey].pemasukan);
     const pengeluaranData = sortedMonths.map(monthKey => monthlyData[monthKey].pengeluaran);
     
-    // Penyesuaian untuk Mobile
     const isMobile = window.innerWidth <= 768;
 
     monthlyBarChart = new Chart(reportChartCanvas, {
@@ -953,18 +585,12 @@ function renderReportCharts(transactions) {
                     }
                 },
                 legend: {
-                    // !!! BAGIAN DIPERBARUI !!!
-                    // Pindahkan legenda ke bawah jika layar mobile
                     position: isMobile ? 'bottom' : 'top',
                 }
             }
         }
     });
 }
-
-// ... Sisa kode di script.js Anda tetap sama ...
-// (Fungsi-fungsi lain tidak perlu diubah)
-
 
 function displayBudgets() {
     const budgetContainer = document.getElementById('budget-container');

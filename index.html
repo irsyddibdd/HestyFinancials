@@ -6,276 +6,254 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Keuangan Hesty Intan</title>
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="tab icon.png">
 
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-        <!-- !!! KODE BARU UNTUK SPLASH SCREEN / INTRO !!! -->
-        <div id="splash-screen">
-            <div class="splash-content">
-                <div class="splash-logo">
-                    <img src="pig pink.png" alt="Logo Aplikasi Keuangan">
-                </div>
-                <h1 class="splash-title">Hesty Intan's Finance</h1>
-                <div class="loading-dots">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                </div>
-            </div>  
-        </div>
-
-        <div class="app-layout">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <h2>Hesty Intan's<br><span>Financials</span></h2>
-                </div>
-                <nav class="sidebar-nav">
-                    <ul>
-                        <li class="active"><a href="#" data-page="page-dashboard"><i class="fas fa-tachometer-alt"></i>
-                                Dashboard</a></li>
-                        <li><a href="#" data-page="page-riwayat"><i class="fas fa-exchange-alt"></i> Transaksi</a></li>
-                        <li><a href="#" data-page="page-laporan"><i class="fas fa-chart-pie"></i> Laporan</a></li>
-                        <li><a href="#" data-page="page-anggaran"><i class="fas fa-piggy-bank"></i> Anggaran</a></li>
-                        <li><a href="#" data-page="page-tujuan"><i class="fas fa-bullseye"></i> Tujuan</a></li>
-                        <li><a href="#" data-page="page-pengaturan"><i class="fas fa-cog"></i> Pengaturan</a></li>
-                    </ul>
-                </nav>
-                <div class="sidebar-footer">
-                    <p>&copy; 2025 - Dibuat dengan ❤️</p>
-                </div>
-            </aside>
-        
-            <main class="main-content">
-        
-                <div id="page-dashboard">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-dashboard">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Selamat Datang, Hesty!</h1>
-                        <button class="add-new-btn" id="open-modal-btn">
-                            <i class="fas fa-plus"></i> Tambah Transaksi
-                        </button>
-                    </header>
-        
-                    <section class="summary-cards">
-                        <div class="card summary-card">
-                            <div class="card-icon icon-balance">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <div class="card-content">
-                                <p>Total Saldo</p>
-                                <h3 id="total-saldo">Rp 0</h3>
-                            </div>
-                        </div>
-                        <div class="card summary-card">
-                            <div class="card-icon icon-income">
-                                <i class="fas fa-arrow-down"></i>
-                            </div>
-                            <div class="card-content">
-                                <p>Pemasukan (Bulan Ini)</p>
-                                <h3 id="total-pemasukan">Rp 0</h3>
-                            </div>
-                        </div>
-                        <div class="card summary-card">
-                            <div class="card-icon icon-expense">
-                                <i class="fas fa-arrow-up"></i>
-                            </div>
-                            <div class="card-content">
-                                <p>Pengeluaran (Bulan Ini)</p>
-                                <h3 id="total-pengeluaran">Rp 0</h3>
-                            </div>
-                        </div>
-                    </section>
-        
-                    <section class="main-dashboard-grid">
-                        <div class="card transaction-history">
-                            <h2>Riwayat Terbaru</h2>
-                            <table class="transaction-table">
-                                <tbody id="transactionHistoryBody">
-                                </tbody>
-                            </table>
-                            <a href="#" class="view-all">Lihat Semua</a>
-                        </div>
-                        <div class="card expense-breakdown">
-                            <h2>Komposisi Pengeluaran</h2>
-                            <div class="pie-chart-container">
-                                <canvas id="pieChart"></canvas>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <div id="page-riwayat" class="page-hidden">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-riwayat">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Riwayat Transaksi</h1>
-                    </header>
-        
-                    <div class="card">
-        
-                        <div class="filter-controls">
-                            <input type="text" id="searchInput" placeholder="Cari kategori atau deskripsi...">
-                            <select id="typeFilter">
-                                <option value="semua">Semua Tipe</option>
-                                <option value="Pemasukan">Pemasukan</option>
-                                <option value="Pengeluaran">Pengeluaran</option>
-                            </select>
-                        </div>
-        
-                        <div class="table-container">
-                            <table class="transaction-table-full">
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Kategori</th>
-                                        <th>Deskripsi</th>
-                                        <th>Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="full-history-body">
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-        
-                <div id="page-laporan" class="page-hidden">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-laporan">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Laporan Keuangan</h1>
-                    </header>
-        
-                    <div class="card">
-                        <h2>Ringkasan Bulanan</h2>
-                        <p>Visualisasi perbandingan total pemasukan dan pengeluaran setiap bulan.</p>
-                        <div class="chart-container-full">
-                            <canvas id="monthlyBarChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-        
-                <div id="page-anggaran" class="page-hidden">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-anggaran">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Anggaran Bulanan</h1>
-                    </header>
-        
-                    <div id="budget-container">
-                    </div>
-                </div>
-        
-                <div id="page-tujuan" class="page-hidden">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-tujuan">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Tujuan Tabungan</h1>
-                    </header>
-        
-                    <div id="goals-container" class="goals-grid">
-                    </div>
-                </div>
-        
-                <div id="page-pengaturan" class="page-hidden">
-                    <header class="main-header">
-                        <button class="menu-toggle" id="menu-toggle-pengaturan">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h1>Pengaturan</h1>
-                    </header>
-        
-                    <div class="settings-grid">
-                        <div class="card">
-                            <h3>Kelola Anggaran</h3>
-                            <form id="addBudgetForm" class="settings-form">
-                                <input type="text" id="budgetKategori" placeholder="Nama Kategori Baru" required>
-                                <input type="text" inputmode="numeric" id="budgetAmount" placeholder="Jumlah Budget" required>
-                                <button type="submit">Tambah Anggaran</button>
-                            </form>
-                            <ul id="budgetList" class="settings-list">
-                            </ul>
-                        </div>
-        
-                        <div class="card">
-                            <h3>Kelola Tujuan</h3>
-                            <form id="addGoalForm" class="settings-form">
-                                <input type="text" id="goalName" placeholder="Nama Tujuan Baru" required>
-                                <input type="text" inputmode="numeric" id="goalTarget" placeholder="Target Dana" required>
-                                <button type="submit">Tambah Tujuan</button>
-                            </form>
-                            <ul id="goalList" class="settings-list">
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-        
-            </main>
-        </div>
-        
-        <div class="modal-overlay" id="transaction-modal">
-            <div class="modal-content">
-                <header class="modal-header">
-                    <h2>Tambah Transaksi Baru</h2>
-                    <button class="close-modal-btn" id="close-modal-btn">&times;</button>
-                </header>
-                <div class="modal-body">
-                    <form id="transactionForm">
-                        <div class="form-group">
-                            <label for="tanggal">Tanggal</label>
-                            <input type="date" id="tanggal" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jumlah">Jumlah (Rp)</label>
-                            <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="tipe">Tipe Transaksi</label>
-                            <select id="tipe" required>
-                                <option value="Pengeluaran">Pengeluaran</option>
-                                <option value="Pemasukan">Pemasukan</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="kategori">Kategori</label>
-                            <input type="text" id="kategori" placeholder="Contoh: Makanan, Gaji" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="deskripsi">Deskripsi (Opsional)</label>
-                            <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi">
-                        </div>
-                        <button type="submit" id="submitButton">Simpan Catatan</button>
-                    </form>
-                    <p id="statusMessage"></p>
-                </div>
+    <!-- Splash Screen / Intro Animation -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <img src="pig pink.png" alt="Logo Aplikasi Keuangan">
+            </div>
+            <h1 class="splash-title">Hesty Intan's Finance</h1>
+            <div class="loading-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
             </div>
         </div>
-        
-        <script src="script.js"></script>
+    </div>
 
-        <button class="fab-add-transaction" id="fab-open-modal-btn">
-            <i class="fas fa-plus"></i>
-            </button>
-            
-        </body>
-        
-        </html>
-    
+    <!-- Main Application Layout -->
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Hesty Intan's<br><span>Financials</span></h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#" data-page="page-dashboard"><i class="fas fa-tachometer-alt"></i>
+                            Dashboard</a></li>
+                    <li><a href="#" data-page="page-riwayat"><i class="fas fa-exchange-alt"></i> Transaksi</a></li>
+                    <li><a href="#" data-page="page-laporan"><i class="fas fa-chart-pie"></i> Laporan</a></li>
+                    <li><a href="#" data-page="page-anggaran"><i class="fas fa-piggy-bank"></i> Anggaran</a></li>
+                    <li><a href="#" data-page="page-tujuan"><i class="fas fa-bullseye"></i> Tujuan</a></li>
+                    <li><a href="#" data-page="page-pengaturan"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2025 - Dibuat dengan ❤️</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Page: Dashboard -->
+            <div id="page-dashboard">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-dashboard"><i class="fas fa-bars"></i></button>
+                    <h1>Selamat Datang, Hesty!</h1>
+                    <button class="add-new-btn" id="open-modal-btn"><i class="fas fa-plus"></i> Tambah
+                        Transaksi</button>
+                </header>
+                <section class="summary-cards">
+                    <div class="card summary-card">
+                        <div class="card-icon icon-balance"><i class="fas fa-wallet"></i></div>
+                        <div class="card-content">
+                            <p>Total Saldo</p>
+                            <h3 id="total-saldo">Rp 0</h3>
+                        </div>
+                    </div>
+                    <div class="card summary-card">
+                        <div class="card-icon icon-income"><i class="fas fa-arrow-down"></i></div>
+                        <div class="card-content">
+                            <p>Pemasukan (Bulan Ini)</p>
+                            <h3 id="total-pemasukan">Rp 0</h3>
+                        </div>
+                    </div>
+                    <div class="card summary-card">
+                        <div class="card-icon icon-expense"><i class="fas fa-arrow-up"></i></div>
+                        <div class="card-content">
+                            <p>Pengeluaran (Bulan Ini)</p>
+                            <h3 id="total-pengeluaran">Rp 0</h3>
+                        </div>
+                    </div>
+                </section>
+                <section class="main-dashboard-grid">
+                    <div class="card transaction-history">
+                        <h2>Riwayat Terbaru</h2>
+                        <table class="transaction-table">
+                            <tbody id="transactionHistoryBody"></tbody>
+                        </table>
+                        <a href="#" class="view-all">Lihat Semua</a>
+                    </div>
+                    <div class="card expense-breakdown">
+                        <h2>Komposisi Pengeluaran</h2>
+                        <div class="pie-chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page: Riwayat Transaksi -->
+            <div id="page-riwayat" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-riwayat"><i class="fas fa-bars"></i></button>
+                    <h1>Riwayat Transaksi</h1>
+                </header>
+                <div class="card">
+                    <div class="filter-controls">
+                        <input type="text" id="searchInput" placeholder="Cari kategori atau deskripsi...">
+                        <select id="typeFilter">
+                            <option value="semua">Semua Tipe</option>
+                            <option value="Pemasukan">Pemasukan</option>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="transaction-table-full">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kategori</th>
+                                    <th>Deskripsi</th>
+                                    <th>Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Pages (Laporan, Anggaran, etc.) -->
+            <div id="page-laporan" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-laporan"><i class="fas fa-bars"></i></button>
+                    <h1>Laporan Keuangan</h1>
+                </header>
+                <div class="card">
+                    <h2>Ringkasan Bulanan</h2>
+                    <p>Visualisasi perbandingan total pemasukan dan pengeluaran setiap bulan.</p>
+                    <div class="chart-container-full">
+                        <canvas id="monthlyBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-anggaran" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-anggaran"><i class="fas fa-bars"></i></button>
+                    <h1>Anggaran Bulanan</h1>
+                </header>
+                <div id="budget-container"></div>
+            </div>
+
+            <div id="page-tujuan" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-tujuan"><i class="fas fa-bars"></i></button>
+                    <h1>Tujuan Tabungan</h1>
+                </header>
+                <div id="goals-container" class="goals-grid"></div>
+            </div>
+
+            <div id="page-pengaturan" class="page-hidden">
+                <header class="main-header">
+                    <button class="menu-toggle" id="menu-toggle-pengaturan"><i class="fas fa-bars"></i></button>
+                    <h1>Pengaturan</h1>
+                </header>
+                <div class="settings-grid">
+                    <div class="card">
+                        <h3>Kelola Anggaran</h3>
+                        <form id="addBudgetForm" class="settings-form">
+                            <input type="text" id="budgetKategori" placeholder="Nama Kategori Baru" required>
+                            <input type="text" inputmode="numeric" id="budgetAmount" placeholder="Jumlah Budget"
+                                required>
+                            <button type="submit">Tambah Anggaran</button>
+                        </form>
+                        <ul id="budgetList" class="settings-list"></ul>
+                    </div>
+                    <div class="card">
+                        <h3>Kelola Tujuan</h3>
+                        <form id="addGoalForm" class="settings-form">
+                            <input type="text" id="goalName" placeholder="Nama Tujuan Baru" required>
+                            <input type="text" inputmode="numeric" id="goalTarget" placeholder="Target Dana" required>
+                            <button type="submit">Tambah Tujuan</button>
+                        </form>
+                        <ul id="goalList" class="settings-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Adding New Transaction -->
+    <div class="modal-overlay" id="transaction-modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Tambah Transaksi Baru</h2>
+                <button class="close-modal-btn" id="close-modal-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label for="tanggal">Tanggal</label>
+                        <input type="date" id="tanggal" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jumlah">Jumlah (Rp)</label>
+                        <input type="text" inputmode="numeric" id="jumlah" placeholder="Contoh: 50.000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipe">Tipe Transaksi</label>
+                        <select id="tipe" required>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                            <option value="Pemasukan">Pemasukan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="kategori">Kategori</label>
+                        <input type="text" id="kategori" placeholder="Contoh: Makanan, Gaji" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deskripsi">Deskripsi (Opsional)</label>
+                        <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi">
+                    </div>
+                    <button type="submit" id="submitButton">Simpan Catatan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- !!! PERBAIKAN: Tombol Aksi Mengambang (FAB) untuk Mobile !!! -->
+    <button class="fab-add-transaction" id="fab-open-modal-btn">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Main Script -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
