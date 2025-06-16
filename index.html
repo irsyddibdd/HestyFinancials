@@ -27,6 +27,10 @@
 
 <body>
 
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
     <!-- Splash Screen / Intro Animation -->
     <div id="splash-screen">
         <div class="splash-content">
@@ -163,6 +167,7 @@
                                     <th>Kategori</th>
                                     <th>Deskripsi</th>
                                     <th>Jumlah</th>
+                                    <th style="text-align: right;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="full-history-body"></tbody>
@@ -186,6 +191,16 @@
                     <button class="menu-toggle" id="menu-toggle-laporan"><i class="fas fa-bars"></i></button>
                     <h1>Laporan Keuangan</h1>
                 </header>
+            
+                <div class="filter-controls" style="margin-bottom: 1.5rem;">
+                    <label for="reportDateFilter" style="font-weight: 500; color: white;">Tampilkan Laporan:</label>
+                    <select id="reportDateFilter">
+                        <option value="this_month">Bulan Ini</option>
+                        <option value="last_month">Bulan Lalu</option>
+                        <option value="last_3_months">3 Bulan Terakhir</option>
+                        <option value="all_time">Semua Waktu</option>
+                    </select>
+                </div>
                 <div class="card">
                     <h2>Ringkasan Bulanan</h2>
                     <p>Visualisasi perbandingan total pemasukan dan pengeluaran setiap bulan.</p>
@@ -220,23 +235,32 @@
                         <h3>Kelola Anggaran</h3>
                         <form id="addBudgetForm" class="settings-form">
                             <input type="text" id="budgetKategori" placeholder="Nama Kategori Baru" required>
-                            <input type="text" inputmode="numeric" id="budgetAmount" placeholder="Jumlah Budget"
-                                required>
-                            <button type="submit">Tambah Anggaran</button>
+                            <input type="text" inputmode="numeric" id="budgetAmount" placeholder="Jumlah Budget" required>
+                            <button type="submit">Tambah</button>
                         </form>
                         <ul id="budgetList" class="settings-list"></ul>
                     </div>
+                
                     <div class="card">
                         <h3>Kelola Tujuan</h3>
                         <form id="addGoalForm" class="settings-form">
                             <input type="text" id="goalName" placeholder="Nama Tujuan Baru" required>
                             <input type="text" inputmode="numeric" id="goalTarget" placeholder="Target Dana" required>
-                            <button type="submit">Tambah Tujuan</button>
+                            <button type="submit">Tambah</button>
                         </form>
                         <ul id="goalList" class="settings-list"></ul>
                     </div>
+                
+                    <div class="card">
+                        <h3>Kelola Rekening</h3>
+                        <form id="addRekeningForm" class="settings-form">
+                            <input type="text" id="rekeningName" placeholder="Nama Rekening Baru" required>
+                            <input type="text" inputmode="numeric" id="rekeningInitialBalance" placeholder="Saldo Awal" required>
+                            <button type="submit">Tambah</button>
+                        </form>
+                        <ul id="rekeningList" class="settings-list"></ul>
+                    </div>
                 </div>
-            </div>
         </main>
     </div>
 
@@ -277,7 +301,136 @@
                         <label for="deskripsi">Deskripsi (Opsional)</label>
                         <input type="text" id="deskripsi" placeholder="Contoh: Beli Kopi">
                     </div>
-                    <button type="submit" id="submitButton">Simpan Catatan</button>         </form>
+                    <button type="submit" class="btn-primary" id="submitButton">Simpan Catatan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-transaction-modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Edit Transaksi</h2>
+                <button class="close-modal-btn" id="close-edit-modal-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="editTransactionForm">
+                    <input type="hidden" id="edit-timestamp">
+    
+                    <div class="form-group">
+                        <label for="edit-tanggal">Tanggal</label>
+                        <input type="date" id="edit-tanggal" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-jumlah">Jumlah (Rp)</label>
+                        <input type="text" inputmode="numeric" id="edit-jumlah" placeholder="Contoh: 50.000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-tipe">Tipe Transaksi</label>
+                        <select id="edit-tipe" required>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                            <option value="Pemasukan">Pemasukan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-rekening">Sumber/Tujuan Rekening</label>
+                        <select id="edit-rekening" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-kategori">Kategori</label>
+                        <input type="text" id="edit-kategori" placeholder="Contoh: Makanan, Gaji" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-deskripsi">Deskripsi (Opsional)</label>
+                        <input type="text" id="edit-deskripsi" placeholder="Contoh: Beli Kopi">
+                    </div>
+                    <button type="submit" class="btn-primary" id="submitEditButton">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <header class="modal-header">
+                <h2 id="confirm-modal-title">Konfirmasi Tindakan</h2>
+            </header>
+            <div class="modal-body" style="text-align: center;">
+                <p id="confirm-modal-text" style="margin-bottom: 2rem; font-size: 1.1rem;"></p>
+                <div class="confirm-modal-actions">
+                    <button class="btn-secondary" id="confirm-modal-cancel-btn">Batal</button>
+                    <button class="btn-danger" id="confirm-modal-confirm-btn">Ya, Hapus</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="edit-budget-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2>Edit Anggaran</h2>
+                <button class="close-modal-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="editBudgetForm">
+                    <input type="hidden" id="edit-budget-old-kategori">
+                    <div class="form-group">
+                        <label for="edit-budget-kategori">Nama Kategori</label>
+                        <input type="text" id="edit-budget-kategori" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-budget-amount">Jumlah Budget</label>
+                        <input type="text" inputmode="numeric" id="edit-budget-amount" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="edit-goal-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2>Edit Tujuan</h2>
+                <button class="close-modal-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="editGoalForm">
+                    <input type="hidden" id="edit-goal-old-name">
+                    <div class="form-group">
+                        <label for="edit-goal-name">Nama Tujuan</label>
+                        <input type="text" id="edit-goal-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-goal-target">Target Dana</label>
+                        <input type="text" inputmode="numeric" id="edit-goal-target" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-goal-terkumpul">Sudah Terkumpul</label>
+                        <input type="text" inputmode="numeric" id="edit-goal-terkumpul" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Simpan Perubahan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="edit-rekening-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <header class="modal-header">
+                <h2>Edit Nama Rekening</h2>
+                <button class="close-modal-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <form id="editRekeningForm">
+                    <input type="hidden" id="edit-rekening-old-name">
+                    <div class="form-group">
+                        <label for="edit-rekening-new-name">Nama Rekening Baru</label>
+                        <input type="text" id="edit-rekening-new-name" required>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">*Saldo rekening hanya bisa diubah melalui
+                        penambahan/pengurangan transaksi.</p>
+                    <button type="submit" class="btn-primary">Simpan Perubahan</button>
+                </form>
             </div>
         </div>
     </div>

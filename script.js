@@ -25,14 +25,24 @@ window.addEventListener('load', function() {
 });
 
 
-const apsiUrl = 'https://script.google.com/macros/s/AKfycbyoRetC1XqViZXPV_Hptb3QF9FkxRXp1EM-ON_4CxYSNtMY4anT7ATGY_XUdFqqlArU/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
+const apsiUrl = 'https://script.google.com/macros/s/AKfycbzcP5dPaNbDFqNC5z105AjU-VvibeOjJpqMykxf3N-tm-DwIRfgfCwyrHiXmLBhX4CO4g/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
 
 let allTransactions = [], budgetData = {}, goalsData = [], rekeningData = [];
 let pieChart, monthlyBarChart;
 let isDataLoading = false;
 let categoryMemory = {};
 
+function showLoading() {
+    document.getElementById('loading-overlay').classList.add('visible');
+}
+
+function hideLoading() {
+    document.getElementById('loading-overlay').classList.remove('visible');
+}
+
 /**
+ * 
+ * 
  * ======================================================
  * !!! FUNGSI BARU UNTUK KOMPRES GAMBAR SEBELUM UPLOAD !!!
  * ======================================================
@@ -187,52 +197,147 @@ function formatCurrency(amount) {
     }).format(numberAmount);
 }
 
+// GANTI SELURUH FUNGSI LAMA ANDA DENGAN VERSI LENGKAP INI
 function setupEventListeners() {
+    // !!! BLOK UNTUK EDIT & HAPUS DIMULAI DI SINI !!!
 
-        // !!! KODE BARU: Logika untuk membuka dan menutup modal bukti transaksi !!!
-        const receiptModal = document.getElementById('receipt-modal');
-        const closeReceiptModalBtn = document.getElementById('close-receipt-modal');
-        const receiptModalImg = document.getElementById('receipt-modal-img');
-        const fullHistoryBody = document.getElementById('full-history-body');
+    // Event listener untuk tombol aksi di tabel riwayat (INI YANG MEMBUAT TOMBOL PENSIL BERFUNGSI)
+    const fullHistoryBodyForActions = document.getElementById('full-history-body');
+    if (fullHistoryBodyForActions) {
+        fullHistoryBodyForActions.addEventListener('click', function(e) {
+            const editButton = e.target.closest('.edit-btn');
+            const deleteButton = e.target.closest('.delete-btn');
 
-            // !!! EVENT LISTENER BARU UNTUK SARAN KATEGORI !!!
-        const deskripsiInput = document.getElementById('deskripsi');
-        if (deskripsiInput) {
-        deskripsiInput.addEventListener('input', handleDescriptionInput);
-        }
-            // !!! EVENT LISTENER BARU UNTUK FILTER TANGGAL LAPORAN !!!
-        const reportFilter = document.getElementById('reportDateFilter');
-        if (reportFilter) {
-        reportFilter.addEventListener('change', updateReportView);
+            if (editButton) {
+                const transaction = JSON.parse(editButton.dataset.transaction);
+                openEditModal(transaction);
+            }
+
+            if (deleteButton) {
+                const timestamp = deleteButton.dataset.timestamp;
+                handleDeleteTransaction(timestamp);
+            }
+        });
+    }
+
+    // Event listener untuk form edit
+    const editForm = document.getElementById('editTransactionForm');
+    if (editForm) {
+        editForm.addEventListener('submit', handleEditFormSubmit);
+    }
+
+        // --- Form Penambahan ---
+        const addRekeningForm = document.getElementById('addRekeningForm');
+        if (addRekeningForm) addRekeningForm.addEventListener('submit', handleAddRekening);
+    
+        // --- Form Edit ---
+        const editBudgetForm = document.getElementById('editBudgetForm');
+        if (editBudgetForm) editBudgetForm.addEventListener('submit', handleEditBudgetSubmit);
+        
+        const editGoalForm = document.getElementById('editGoalForm');
+        if (editGoalForm) editGoalForm.addEventListener('submit', handleEditGoalSubmit);
+    
+        const editRekeningForm = document.getElementById('editRekeningForm');
+        if (editRekeningForm) editRekeningForm.addEventListener('submit', handleEditRekeningSubmit);
+    
+        // --- Klik pada Daftar (Delegasi Event) ---
+        const budgetList = document.getElementById('budgetList');
+        if (budgetList) {
+            budgetList.addEventListener('click', e => {
+                const editBtn = e.target.closest('.edit-budget-btn');
+                if (editBtn) openEditBudgetModal(editBtn.dataset.kategori, editBtn.dataset.amount);
+                
+                const deleteBtn = e.target.closest('.delete-budget-btn');
+                if (deleteBtn) handleDeleteBudget(deleteBtn.dataset.kategori);
+            });
         }
     
-        if (receiptModal && fullHistoryBody) {
-        // Menggunakan event delegation untuk menangani klik pada ikon bukti
+        const goalList = document.getElementById('goalList');
+        if (goalList) {
+            goalList.addEventListener('click', e => {
+                const editBtn = e.target.closest('.edit-goal-btn');
+                if (editBtn) openEditGoalModal(JSON.parse(editBtn.dataset.goal));
+                
+                const deleteBtn = e.target.closest('.delete-goal-btn');
+                if (deleteBtn) handleDeleteGoal(deleteBtn.dataset.nama);
+            });
+        }
+    
+        const rekeningList = document.getElementById('rekeningList');
+        if (rekeningList) {
+            rekeningList.addEventListener('click', e => {
+                const editBtn = e.target.closest('.edit-rekening-btn');
+                if (editBtn) openEditRekeningModal(editBtn.dataset.nama);
+    
+                const deleteBtn = e.target.closest('.delete-rekening-btn');
+                if (deleteBtn) handleDeleteRekening(deleteBtn.dataset.nama);
+            });
+        }
+    
+        // --- Penutup Modal Edit ---
+        document.querySelectorAll('#edit-budget-modal, #edit-goal-modal, #edit-rekening-modal').forEach(modal => {
+            const closeBtn = modal.querySelector('.close-modal-btn');
+            if(closeBtn) closeBtn.addEventListener('click', () => modal.classList.remove('is-open'));
+            modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('is-open'); });
+        });
+
+    // Event listener untuk menutup modal edit
+    const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
+    const editModal = document.getElementById('edit-transaction-modal');
+    if(closeEditModalBtn && editModal) {
+        closeEditModalBtn.addEventListener('click', () => editModal.classList.remove('is-open'));
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) editModal.classList.remove('is-open');
+        });
+    }
+    
+    // Event listener untuk format rupiah di input jumlah modal edit
+    const editJumlahInput = document.getElementById('edit-jumlah');
+    if(editJumlahInput) {
+        editJumlahInput.addEventListener('input', formatInputRupiah);
+    }
+
+    // !!! BLOK UNTUK EDIT & HAPUS SELESAI DI SINI !!!
+
+
+    // --- Kode event listener lain yang sudah Anda miliki sebelumnya ---
+
+    const receiptModal = document.getElementById('receipt-modal');
+    const closeReceiptModalBtn = document.getElementById('close-receipt-modal');
+    const receiptModalImg = document.getElementById('receipt-modal-img');
+    const fullHistoryBody = document.getElementById('full-history-body');
+
+    const deskripsiInput = document.getElementById('deskripsi');
+    if (deskripsiInput) {
+        deskripsiInput.addEventListener('input', handleDescriptionInput);
+    }
+    const reportFilter = document.getElementById('reportDateFilter');
+    if (reportFilter) {
+        reportFilter.addEventListener('change', updateReportView);
+    }
+
+    if (receiptModal && fullHistoryBody) {
         fullHistoryBody.addEventListener('click', function(e) {
             const button = e.target.closest('.view-receipt-btn');
             if (button) {
                 e.preventDefault();
                 const imgUrl = button.dataset.imgUrl;
-
-                // !!! TAMBAHKAN BARIS DI BAWAH INI !!!
-                console.log("Mencoba menampilkan URL:", imgUrl); 
-                
+                console.log("Mencoba menampilkan URL:", imgUrl);
                 receiptModalImg.src = imgUrl;
                 receiptModal.classList.add('is-open');
             }
         });
-    
-            // Menutup modal
-            closeReceiptModalBtn.addEventListener('click', () => {
+
+        closeReceiptModalBtn.addEventListener('click', () => {
+            receiptModal.classList.remove('is-open');
+        });
+
+        receiptModal.addEventListener('click', (e) => {
+            if (e.target === receiptModal) {
                 receiptModal.classList.remove('is-open');
-            });
-    
-            receiptModal.addEventListener('click', (e) => {
-                if (e.target === receiptModal) {
-                    receiptModal.classList.remove('is-open');
-                }
-            });
-        }
+            }
+        });
+    }
 
     const sidebar = document.querySelector('.sidebar');
     document.querySelectorAll('.menu-toggle').forEach(btn => {
@@ -285,7 +390,7 @@ function setupEventListeners() {
     });
 
     const viewAllLink = document.querySelector('.view-all');
-    if(viewAllLink) {
+    if (viewAllLink) {
         viewAllLink.addEventListener('click', (e) => {
             e.preventDefault();
             navigateTo('page-riwayat');
@@ -296,41 +401,56 @@ function setupEventListeners() {
 
     const searchInput = document.getElementById('searchInput');
     const typeFilter = document.getElementById('typeFilter');
-    if(searchInput) searchInput.addEventListener('input', applyFiltersAndRender);
-    if(typeFilter) typeFilter.addEventListener('change', applyFiltersAndRender);
+    if (searchInput) searchInput.addEventListener('input', applyFiltersAndRender);
+    if (typeFilter) typeFilter.addEventListener('change', applyFiltersAndRender);
 
     const addBudgetForm = document.getElementById('addBudgetForm');
-    if(addBudgetForm) {
+    if (addBudgetForm) {
         addBudgetForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const kategori = document.getElementById('budgetKategori').value;
             const budget = document.getElementById('budgetAmount').value.replace(/\D/g, '');
-            const data = { type: 'add_budget', payload: { kategori, budget } };
+            const data = {
+                type: 'add_budget',
+                payload: {
+                    kategori,
+                    budget
+                }
+            };
             sendData(data, submitBtn).then(res => handleServerResponse(res)).finally(() => addBudgetForm.reset());
         });
     }
 
     const addGoalForm = document.getElementById('addGoalForm');
-    if(addGoalForm) {
+    if (addGoalForm) {
         addGoalForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const nama = document.getElementById('goalName').value;
             const target = document.getElementById('goalTarget').value.replace(/\D/g, '');
-            const data = { type: 'add_goal', payload: { nama, target, terkumpul: 0 } };
+            const data = {
+                type: 'add_goal',
+                payload: {
+                    nama,
+                    target,
+                    terkumpul: 0
+                }
+            };
             sendData(data, submitBtn).then(res => handleServerResponse(res)).finally(() => addGoalForm.reset());
         });
     }
-    
+
     const currencyInputs = document.querySelectorAll('#jumlah, #budgetAmount, #goalTarget');
     currencyInputs.forEach(input => {
         if (input) input.addEventListener('input', formatInputRupiah);
     });
 }
 
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
 function handleFormSubmit(e) {
     e.preventDefault();
+    showLoading(); // Tampilkan loading
     const submitButton = document.getElementById('submitButton');
     const modal = document.getElementById('transaction-modal');
 
@@ -345,7 +465,18 @@ function handleFormSubmit(e) {
 
     const data = { type: 'add_transaction', payload };
 
-    sendData(data, submitButton).then(res => handleServerResponse(res, modal, payload));
+    // Modifikasi blok ini
+    sendData(data, submitButton).then(res => {
+         if (res.result === 'success') {
+            modal.classList.remove('is-open');
+            // "Titipkan" pesan sukses ke loadDashboardData
+            loadDashboardData('✅ Transaksi berhasil dicatat!');
+            e.target.reset(); // Reset form setelah berhasil
+        } else {
+            showNotification(`❌ Gagal: ${res.error || 'Terjadi kesalahan'}`, 'error');
+            hideLoading();
+        }
+    });
 }
 
 // Ganti fungsi handleServerResponse Anda dengan ini
@@ -407,20 +538,20 @@ function sendData(data, submitButton = null) {
     });
 }
 
-async function loadDashboardData() {
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
+async function loadDashboardData(successMessage = null) { // Tambahkan parameter di sini
     if (isDataLoading) {
         console.log("Pembatalan: Proses pemuatan data lain sedang berjalan.");
         return;
     }
-    
     console.log("Mencoba mengambil data...");
     isDataLoading = true;
-
     try {
         const response = await fetch(apsiUrl);
         if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
-        const { transactions, budgets, goals, rekening } = await response.json();
+        const data = await response.json();
         
+        const { transactions, budgets, goals, rekening } = data;
         const validTransactions = (transactions || []).filter(trx => trx && trx.tanggal);
         validTransactions.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
         
@@ -429,7 +560,6 @@ async function loadDashboardData() {
         goalsData = goals || [];
         rekeningData = rekening || [];
         
-        // Render semua komponen UI dengan data baru
         populateRekeningDropdown();
         processSummary(allTransactions, rekeningData);
         displayRecentTransactions(allTransactions);
@@ -441,11 +571,17 @@ async function loadDashboardData() {
         displaySettingsLists();
         displayAndCheckAchievements();
         updateReportView();
-        
+
     } catch (error) {
         console.error('Gagal memuat data:', error);
     } finally {
         isDataLoading = false;
+        hideLoading(); // Sembunyikan loading
+        
+        // !!! BAGIAN BARU: Tampilkan notifikasi setelah semua selesai !!!
+        if (successMessage) {
+            showNotification(successMessage);
+        }
         console.log("Proses pemuatan data selesai.");
     }
 }
@@ -565,31 +701,79 @@ function showNotification(message, type = 'success') {
 // ... Sisa fungsi-fungsi lain yang sudah ada ...
 // (Saya salin dari file asli Anda agar tidak ada yang terlewat)
 
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
 function displaySettingsLists() {
     const budgetList = document.getElementById('budgetList');
     const goalList = document.getElementById('goalList');
+    const rekeningList = document.getElementById('rekeningList');
+
+    // Tampilkan Daftar Anggaran
     if (budgetList) {
         budgetList.innerHTML = '';
         if (Object.keys(budgetData).length > 0) {
             for (const kategori in budgetData) {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>${kategori}</span> <strong>${formatCurrency(budgetData[kategori])}</strong>`;
+                li.innerHTML = `
+                    <span>${kategori}</span>
+                    <div class="list-item-details">
+                        <strong>${formatCurrency(budgetData[kategori].amount)}</strong>
+                        <div class="list-item-actions">
+                            <button class="action-btn edit-budget-btn" data-kategori="${kategori}" data-amount="${budgetData[kategori].amount}"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="action-btn delete-budget-btn" data-kategori="${kategori}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
                 budgetList.appendChild(li);
             }
         } else {
             budgetList.innerHTML = '<li>Belum ada budget dibuat.</li>';
         }
     }
+
+    // Tampilkan Daftar Tujuan
     if (goalList) {
         goalList.innerHTML = '';
         if (goalsData.length > 0) {
             goalsData.forEach(goal => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>${goal.nama}</span> <strong>${formatCurrency(goal.target)}</strong>`;
+                // Simpan seluruh objek goal sebagai string JSON di data attribute
+                li.innerHTML = `
+                    <span>${goal.nama}</span>
+                    <div class="list-item-details">
+                        <strong>${formatCurrency(goal.target)}</strong>
+                        <div class="list-item-actions">
+                            <button class="action-btn edit-goal-btn" data-goal='${JSON.stringify(goal)}'><i class="fas fa-pencil-alt"></i></button>
+                            <button class="action-btn delete-goal-btn" data-nama="${goal.nama}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
                 goalList.appendChild(li);
             });
         } else {
             goalList.innerHTML = '<li>Belum ada tujuan dibuat.</li>';
+        }
+    }
+    
+    // Tampilkan Daftar Rekening
+    if (rekeningList) {
+        rekeningList.innerHTML = '';
+        if (rekeningData.length > 0) {
+            rekeningData.forEach(rekening => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${rekening.Nama}</span>
+                    <div class="list-item-details">
+                         <strong>${formatCurrency(rekening.Saldo)}</strong>
+                        <div class="list-item-actions">
+                            <button class="action-btn edit-rekening-btn" data-nama="${rekening.Nama}"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="action-btn delete-rekening-btn" data-nama="${rekening.Nama}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+                rekeningList.appendChild(li);
+            });
+        } else {
+            rekeningList.innerHTML = '<li>Belum ada rekening dibuat.</li>';
         }
     }
 }
@@ -652,9 +836,12 @@ function displayRecentTransactions(transactions) {
     });
 }
 
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
+// GANTI FUNGSI ANDA DENGAN VERSI BERSIH INI
 function displayFullHistory(transactions) {
     const fullHistoryBody = document.getElementById('full-history-body');
     if (!fullHistoryBody) return;
+
     fullHistoryBody.innerHTML = '';
 
     if (transactions.length === 0) {
@@ -666,19 +853,28 @@ function displayFullHistory(transactions) {
         const row = document.createElement('tr');
         const isIncome = trx.tipe === 'Pemasukan';
         
-        // !!! BARU: Tambahkan ikon jika ada link bukti !!!
         const receiptIcon = trx.link_bukti 
-            ? `<a href="#" class="view-receipt-btn" data-img-url="${trx.link_bukti}"><i class="fas fa-paperclip"></i></a>` 
+            ? `<a href="${trx.link_bukti}" target="_blank" class="view-receipt-btn" title="Lihat Bukti"><i class="fas fa-paperclip"></i></a>` 
             : '';
+        
+        const transactionData = JSON.stringify(trx);
 
         row.innerHTML = `
-            <td data-label="Tanggal">${new Date(trx.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</td>
+            <td data-label="Tanggal">${new Date(trx.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'})}</td>
             <td data-label="Kategori">${trx.kategori}</td>
             <td data-label="Deskripsi">${trx.deskripsi || '-'}</td>
             <td data-label="Jumlah" class="${isIncome ? 'jumlah-pemasukan' : 'jumlah-pengeluaran'}">
                 ${formatCurrency(trx.jumlah)}
             </td>
-            <td data-label="Bukti" style="text-align: center;">${receiptIcon}</td>
+            <td data-label="Aksi" class="actions-cell">
+                ${receiptIcon}
+                <button class="action-btn edit-btn" data-transaction='${transactionData}' title="Edit Transaksi">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="action-btn delete-btn" data-timestamp="${trx.timestamp}" title="Hapus Transaksi">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
         `;
         fullHistoryBody.appendChild(row);
     });
@@ -990,4 +1186,252 @@ function updateReportView() {
 
     // Render ulang chart dengan data yang sudah difilter
     renderReportCharts(filteredTransactions);
+}
+
+// !!! KUMPULAN FUNGSI BARU UNTUK EDIT & HAPUS !!!
+
+/**
+ * Membuka modal edit dan mengisinya dengan data transaksi yang ada.
+ */
+function openEditModal(transaction) {
+    // Isi form di modal edit dengan data yang ada
+    document.getElementById('edit-timestamp').value = transaction.timestamp;
+    document.getElementById('edit-tanggal').value = new Date(transaction.tanggal).toISOString().split('T')[0];
+    document.getElementById('edit-jumlah').value = new Intl.NumberFormat('id-ID').format(transaction.jumlah);
+    document.getElementById('edit-tipe').value = transaction.tipe;
+    document.getElementById('edit-kategori').value = transaction.kategori;
+    document.getElementById('edit-deskripsi').value = transaction.deskripsi;
+    
+    // Atur dropdown rekening
+    const rekeningSelect = document.getElementById('edit-rekening');
+    rekeningSelect.innerHTML = document.getElementById('rekening').innerHTML; // Salin opsi dari modal tambah
+    rekeningSelect.value = transaction.rekening;
+
+    // Tampilkan modal
+    document.getElementById('edit-transaction-modal').classList.add('is-open');
+}
+
+/**
+ * Menangani permintaan penghapusan transaksi.
+ */
+// VERSI BARU DARI handleDeleteTransaction DENGAN MODAL KUSTOM
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
+async function handleDeleteTransaction(timestamp) {
+    const confirmed = await showCustomConfirm('Apakah Anda yakin ingin menghapus transaksi ini? Aksi ini tidak dapat dibatalkan.');
+    if (!confirmed) return;
+    
+    showLoading();
+    
+    const data = { type: 'delete_transaction', payload: { timestamp: timestamp } };
+    sendData(data).then(res => {
+        if (res.result === 'success') {
+            // "Titipkan" pesan sukses ke loadDashboardData
+            loadDashboardData('✅ Transaksi berhasil dihapus!');
+        } else {
+            showNotification(`❌ Gagal menghapus: ${res.error}`, 'error');
+            hideLoading();
+        }
+    });
+}
+
+// FUNGSI BARU UNTUK MENAMPILKAN DIALOG KONFIRMASI KUSTOM
+// GANTI FUNGSI LAMA DENGAN VERSI BARU YANG LEBIH SINKRON INI
+function showCustomConfirm(message) {
+    return new Promise(resolve => {
+        const modal = document.getElementById('confirm-modal');
+        const messageEl = document.getElementById('confirm-modal-text');
+        const confirmBtn = document.getElementById('confirm-modal-confirm-btn');
+        const cancelBtn = document.getElementById('confirm-modal-cancel-btn');
+        
+        // Durasi animasi (harus sama dengan yang ada di CSS, yaitu 0.3s)
+        const animationDuration = 300;
+
+        messageEl.textContent = message;
+        modal.classList.add('is-open');
+
+        // Buat fungsi kecil untuk menangani penutupan modal
+        // agar tidak mengulang kode yang sama
+        const handleClose = (value) => {
+            modal.classList.remove('is-open');
+            // Tunggu animasi selesai, BARU resolve promise-nya
+            setTimeout(() => {
+                resolve(value);
+            }, animationDuration);
+        };
+
+        // Gunakan { once: true } agar event listener otomatis dihapus setelah sekali klik
+        // Ini praktik yang baik untuk mencegah kebocoran memori (memory leak)
+        confirmBtn.addEventListener('click', () => handleClose(true), { once: true });
+        cancelBtn.addEventListener('click', () => handleClose(false), { once: true });
+    });
+}
+
+/**
+ * Menangani submit dari form edit.
+ */
+// GANTI FUNGSI LAMA DENGAN VERSI BARU INI
+function handleEditFormSubmit(e) {
+    e.preventDefault();
+    showLoading();
+    const submitButton = document.getElementById('submitEditButton');
+
+    const dataBaru = {
+        tanggal: document.getElementById('edit-tanggal').value,
+        jumlah: document.getElementById('edit-jumlah').value.replace(/\D/g, ''),
+        tipe: document.getElementById('edit-tipe').value,
+        rekening: document.getElementById('edit-rekening').value,
+        kategori: document.getElementById('edit-kategori').value,
+        deskripsi: document.getElementById('edit-deskripsi').value,
+    };
+    
+    const timestamp = document.getElementById('edit-timestamp').value;
+    const data = { type: 'edit_transaction', payload: { timestamp: timestamp, dataBaru: dataBaru } };
+    
+    sendData(data, submitButton).then(res => {
+        if (res.result === 'success') {
+            document.getElementById('edit-transaction-modal').classList.remove('is-open');
+            // "Titipkan" pesan sukses ke loadDashboardData
+            loadDashboardData('✅ Perubahan berhasil disimpan!');
+        } else {
+            showNotification(`❌ Gagal menyimpan: ${res.error}`, 'error');
+            hideLoading();
+        }
+    });
+}
+
+// !!! KUMPULAN FUNGSI BARU UNTUK KELOLA ANGGARAN, TUJUAN, REKENING !!!
+
+// --- ANGGARAN ---
+async function handleDeleteBudget(kategori) {
+    const confirmed = await showCustomConfirm(`Yakin ingin menghapus anggaran untuk "${kategori}"?`);
+    if (!confirmed) return;
+    showLoading();
+    const data = { type: 'delete_budget', payload: { kategori } };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') await loadDashboardData('✅ Anggaran berhasil dihapus!');
+        else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+function openEditBudgetModal(kategori, amount) {
+    document.getElementById('edit-budget-old-kategori').value = kategori;
+    document.getElementById('edit-budget-kategori').value = kategori;
+    document.getElementById('edit-budget-amount').value = new Intl.NumberFormat('id-ID').format(amount);
+    document.getElementById('edit-budget-modal').classList.add('is-open');
+}
+
+async function handleEditBudgetSubmit(e) {
+    e.preventDefault();
+    showLoading();
+    const modal = document.getElementById('edit-budget-modal');
+    const payload = {
+        oldKategori: document.getElementById('edit-budget-old-kategori').value,
+        newKategori: document.getElementById('edit-budget-kategori').value,
+        newBudget: document.getElementById('edit-budget-amount').value.replace(/\D/g, '')
+    };
+    const data = { type: 'edit_budget', payload };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') {
+            modal.classList.remove('is-open');
+            await loadDashboardData('✅ Anggaran berhasil diperbarui!');
+        } else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+// --- TUJUAN ---
+async function handleDeleteGoal(nama) {
+    const confirmed = await showCustomConfirm(`Yakin ingin menghapus tujuan "${nama}"?`);
+    if (!confirmed) return;
+    showLoading();
+    const data = { type: 'delete_goal', payload: { nama } };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') await loadDashboardData('✅ Tujuan berhasil dihapus!');
+        else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+function openEditGoalModal(goal) {
+    document.getElementById('edit-goal-old-name').value = goal.nama;
+    document.getElementById('edit-goal-name').value = goal.nama;
+    document.getElementById('edit-goal-target').value = new Intl.NumberFormat('id-ID').format(goal.target);
+    document.getElementById('edit-goal-terkumpul').value = new Intl.NumberFormat('id-ID').format(goal.terkumpul);
+    document.getElementById('edit-goal-modal').classList.add('is-open');
+}
+
+async function handleEditGoalSubmit(e) {
+    e.preventDefault();
+    showLoading();
+    const modal = document.getElementById('edit-goal-modal');
+    const payload = {
+        oldName: document.getElementById('edit-goal-old-name').value,
+        newName: document.getElementById('edit-goal-name').value,
+        newTarget: document.getElementById('edit-goal-target').value.replace(/\D/g, ''),
+        newTerkumpul: document.getElementById('edit-goal-terkumpul').value.replace(/\D/g, '')
+    };
+    const data = { type: 'edit_goal', payload };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') {
+            modal.classList.remove('is-open');
+            await loadDashboardData('✅ Tujuan berhasil diperbarui!');
+        } else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+// --- REKENING ---
+async function handleAddRekening(e) {
+    e.preventDefault();
+    showLoading();
+    const form = e.target;
+    const payload = {
+        nama: document.getElementById('rekeningName').value,
+        saldoAwal: document.getElementById('rekeningInitialBalance').value.replace(/\D/g, '')
+    };
+    const data = { type: 'add_rekening', payload };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') {
+            form.reset();
+            await loadDashboardData('✅ Rekening berhasil ditambahkan!');
+        } else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+async function handleDeleteRekening(nama) {
+    const confirmed = await showCustomConfirm(`Yakin ingin menghapus rekening "${nama}"? Pastikan tidak ada transaksi yang terkait.`);
+    if (!confirmed) return;
+    showLoading();
+    const data = { type: 'delete_rekening', payload: { nama } };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') await loadDashboardData('✅ Rekening berhasil dihapus!');
+        else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+}
+
+function openEditRekeningModal(nama) {
+    document.getElementById('edit-rekening-old-name').value = nama;
+    document.getElementById('edit-rekening-new-name').value = nama;
+    document.getElementById('edit-rekening-modal').classList.add('is-open');
+}
+
+async function handleEditRekeningSubmit(e) {
+    e.preventDefault();
+    showLoading();
+    const modal = document.getElementById('edit-rekening-modal');
+    const payload = {
+        oldName: document.getElementById('edit-rekening-old-name').value,
+        newName: document.getElementById('edit-rekening-new-name').value
+    };
+    const data = { type: 'edit_rekening', payload };
+    try {
+        const res = await sendData(data);
+        if (res.result === 'success') {
+            modal.classList.remove('is-open');
+            await loadDashboardData('✅ Nama rekening berhasil diperbarui!');
+        } else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
+    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
 }

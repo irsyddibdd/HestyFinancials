@@ -302,7 +302,7 @@ html {
 }
 
 .card {
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.68);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: var(--shadow-md);
@@ -457,12 +457,19 @@ html {
     max-width: 550px;
     padding: 0;
     border: 1px solid var(--border-color);
-    transform: translateY(-20px) scale(0.95);
-    transition: transform 0.3s ease;
+
+    /* Animasi baru: mulai dari ukuran kecil dan sedikit transparan */
+    transform: scale(0.9);
+    opacity: 0;
+
+    /* Transisi yang lebih halus dengan cubic-bezier */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
 }
 
 .modal-overlay.is-open .modal-content {
-    transform: translateY(0) scale(1);
+    /* Kembali ke ukuran normal dan tidak transparan saat terbuka */
+    transform: scale(1);
+    opacity: 1;
 }
 
 .modal-header {
@@ -526,7 +533,8 @@ html {
     border-bottom-color: var(--primary-color);
 }
 
-.modal-body button#submitButton {
+/* KODE BARU UNTUK TOMBOL UTAMA YANG BISA DIGUNAKAN KEMBALI */
+.btn-primary {
     width: 100%;
     padding: 1rem;
     margin-top: 1rem;
@@ -542,7 +550,7 @@ html {
     transition: all 0.3s ease;
 }
 
-.modal-body button#submitButton:hover {
+.btn-primary:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px -6px rgba(106, 17, 203, 0.6);
 }
@@ -1248,24 +1256,140 @@ html {
     color: var(--secondary-color);
 }
 
-/* === GAYA BARU UNTUK FILTER DI HALAMAN LAPORAN === */
-.filter-controls-laporan {
+/* GAYA BARU UNTUK TOMBOL AKSI EDIT/HAPUS */
+.actions-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: 0.25rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: scale(1.2);
+}
+
+.action-btn.edit-btn:hover {
+    color: var(--color-balance);
+    /* Biru */
+}
+
+.action-btn.delete-btn:hover {
+    color: var(--color-expense);
+    /* Merah */
+}
+
+.view-receipt-btn {
+    margin-right: 0.5rem;
+}
+
+/* GAYA BARU UNTUK MODAL KONFIRMASI DAN TOMBOL-TOMBOLNYA */
+.confirm-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    /* Memberi jarak antar tombol */
+}
+
+/* Tombol generik untuk modal, agar ukurannya pas */
+.confirm-modal-actions button {
+    padding: 0.8rem 1.5rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Tombol sekunder (untuk "Batal") */
+.btn-secondary {
+    background-color: #e2e8f0;
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    background-color: #cbd5e1;
+}
+
+/* Tombol berbahaya (untuk "Hapus") */
+.btn-danger {
+    background-color: var(--color-expense);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+    /* Merah yang sedikit lebih gelap */
+    transform: translateY(-2px);
+}
+/* PERBAIKAN: Pastikan modal konfirmasi selalu di paling atas */
+#confirm-modal {
+    z-index: 3000;
+    /* Angka yang lebih tinggi dari modal lain (2000) */
+}
+
+/* GAYA BARU UNTUK LOADING OVERLAY */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Latar belakang gelap semi-transparan */
+    z-index: 9998;
+    /* Di bawah splash screen, tapi di atas segalanya */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+#loading-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Animasi pemutar (spinner) */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* GAYA BARU UNTUK DAFTAR DI PENGATURAN */
+.settings-list li {
+    align-items: center;
+}
+
+.list-item-details {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
-.filter-controls-laporan select {
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    background-color: #f9fafb;
-}
-
-body.dark-mode .filter-controls-laporan select {
-    background-color: #1A202C;
-    color: var(--dark-text-primary);
-    border-color: var(--dark-border-color);
+.list-item-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
 }
