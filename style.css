@@ -50,18 +50,28 @@ body {
 
 /* TAMBAHKAN BLOK BARU INI */
 html {
-    /* Menetapkan gambar dan overlay pada elemen paling luar */
-    background:
-        linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
-        url('rapunzel.jpg') no-repeat center center;
-
-    /* Gunakan background-attachment: fixed di sini */
-    background-attachment: fixed;
-    background-size: cover;
-
     /* Penting: Cegah html dari scrolling, biarkan body yang melakukannya */
     height: 100%;
     overflow: hidden;
+}
+
+/* !!! PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP !!! */
+body::before {
+    content: '';
+    position: fixed;
+    /* Ini kuncinya, posisi fixed pada elemen */
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    /* Letakkan lapisan ini di paling belakang */
+
+    /* Pindahkan semua properti background ke sini */
+    background:
+        linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
+        url('rapunzel.jpg') no-repeat center center;
+    background-size: cover;
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
@@ -191,6 +201,10 @@ html {
     display: flex;
     opacity: 0;
     transition: opacity 0.6s ease-in;
+    position: relative;
+    /* Tambahkan ini */
+    z-index: 1;
+    /* Tambahkan ini */
 }
 
 .app-layout.visible {
@@ -302,7 +316,7 @@ html {
 }
 
 .card {
-    background-color: rgba(255, 255, 255, 0.68);
+    background-color: rgba(255, 255, 255, 0.65);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: var(--shadow-md);
@@ -1392,4 +1406,101 @@ html {
     display: flex;
     gap: 0.25rem;
     margin-left: 0.5rem;
+}
+
+/* GAYA BARU UNTUK EMPTY STATE DI HALAMAN PENGATURAN */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 0.75rem;
+    margin-top: 1rem;
+}
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    opacity: 0.6;
+    margin-bottom: 1rem;
+}
+
+.empty-state-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 300px;
+    margin-bottom: 1.5rem;
+}
+
+.btn-secondary-outline {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary-outline:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* GAYA BARU UNTUK TOMBOL SCROLL-TO-TOP */
+#scrollTopBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1400;
+    /* Di bawah FAB dan modal, tapi di atas konten */
+    background: var(--gradient-main);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+
+    /* Sembunyikan secara default */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+}
+
+/* Gaya saat tombol ditampilkan */
+#scrollTopBtn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+#scrollTopBtn:hover {
+    box-shadow: 0 6px 20px 0 rgba(187, 17, 203, 0.55);
+}
+
+/* Penyesuaian untuk mobile agar tidak bertumpuk dengan tombol FAB */
+@media (max-width: 768px) {
+    #scrollTopBtn {
+        bottom: 90px;
+        /* Posisikan sedikit lebih atas dari FAB */
+        right: 1.5rem;
+    }
 }

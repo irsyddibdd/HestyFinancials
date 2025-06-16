@@ -25,7 +25,7 @@ window.addEventListener('load', function() {
 });
 
 
-const apsiUrl = 'https://script.google.com/macros/s/AKfycbzcP5dPaNbDFqNC5z105AjU-VvibeOjJpqMykxf3N-tm-DwIRfgfCwyrHiXmLBhX4CO4g/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
+const apsiUrl = 'https://script.google.com/macros/s/AKfycbyC89AxmeJvUzBeEhMQpklOchSUxG2a_ClDFem2XhniM_qQ0-GWMt6GhKzSRLc9EcOhMg/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
 
 let allTransactions = [], budgetData = {}, goalsData = [], rekeningData = [];
 let pieChart, monthlyBarChart;
@@ -216,6 +216,41 @@ function setupEventListeners() {
             if (deleteButton) {
                 const timestamp = deleteButton.dataset.timestamp;
                 handleDeleteTransaction(timestamp);
+            }
+        });
+    }
+
+    // !!! EVENT LISTENER BARU UNTUK TOMBOL SCROLL-TO-TOP !!!
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    if (scrollTopBtn) {
+        // Tampilkan tombol saat body di-scroll
+        document.body.onscroll = function() {
+            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                scrollTopBtn.classList.add('show');
+            } else {
+                scrollTopBtn.classList.remove('show');
+            }
+        };
+
+        // Saat tombol diklik, scroll ke atas
+        scrollTopBtn.addEventListener('click', () => {
+            document.body.scrollTo({ top: 0, behavior: 'smooth' });
+            document.documentElement.scrollTo({ top: 0, behavior: 'smooth' }); // Untuk browser lain
+        });
+    }
+
+    // !!! EVENT LISTENER BARU UNTUK TOMBOL DI EMPTY STATE !!!
+    const settingsPage = document.getElementById('page-pengaturan');
+    if(settingsPage) {
+        settingsPage.addEventListener('click', e => {
+            if (e.target.id === 'add-first-budget-btn') {
+                document.getElementById('budgetKategori').focus();
+            }
+            if (e.target.id === 'add-first-goal-btn') {
+                document.getElementById('goalName').focus();
+            }
+            if (e.target.id === 'add-first-rekening-btn') {
+                document.getElementById('rekeningName').focus();
             }
         });
     }
@@ -702,6 +737,7 @@ function showNotification(message, type = 'success') {
 // (Saya salin dari file asli Anda agar tidak ada yang terlewat)
 
 // GANTI FUNGSI LAMA DENGAN VERSI BARU INI
+// GANTI FUNGSI LAMA DENGAN VERSI BARU YANG LEBIH INTERAKTIF INI
 function displaySettingsLists() {
     const budgetList = document.getElementById('budgetList');
     const goalList = document.getElementById('goalList');
@@ -726,7 +762,15 @@ function displaySettingsLists() {
                 budgetList.appendChild(li);
             }
         } else {
-            budgetList.innerHTML = '<li>Belum ada budget dibuat.</li>';
+            // TAMPILAN EMPTY STATE BARU UNTUK ANGGARAN
+            budgetList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-piggy-bank"></i></div>
+                    <h4 class="empty-state-title">Belum Ada Anggaran</h4>
+                    <p class="empty-state-text">Buat anggaran untuk kategori pengeluaran agar keuangan Anda lebih terkontrol.</p>
+                    <button class="btn-secondary-outline" id="add-first-budget-btn">Buat Anggaran Pertama</button>
+                </div>
+            `;
         }
     }
 
@@ -736,7 +780,6 @@ function displaySettingsLists() {
         if (goalsData.length > 0) {
             goalsData.forEach(goal => {
                 const li = document.createElement('li');
-                // Simpan seluruh objek goal sebagai string JSON di data attribute
                 li.innerHTML = `
                     <span>${goal.nama}</span>
                     <div class="list-item-details">
@@ -750,7 +793,15 @@ function displaySettingsLists() {
                 goalList.appendChild(li);
             });
         } else {
-            goalList.innerHTML = '<li>Belum ada tujuan dibuat.</li>';
+            // TAMPILAN EMPTY STATE BARU UNTUK TUJUAN
+            goalList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-bullseye"></i></div>
+                    <h4 class="empty-state-title">Belum Ada Tujuan</h4>
+                    <p class="empty-state-text">Tetapkan tujuan finansial Anda, seperti menabung untuk liburan atau barang impian.</p>
+                    <button class="btn-secondary-outline" id="add-first-goal-btn">Buat Tujuan Pertama</button>
+                </div>
+            `;
         }
     }
     
@@ -773,7 +824,15 @@ function displaySettingsLists() {
                 rekeningList.appendChild(li);
             });
         } else {
-            rekeningList.innerHTML = '<li>Belum ada rekening dibuat.</li>';
+            // TAMPILAN EMPTY STATE BARU UNTUK REKENING
+            rekeningList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-wallet"></i></div>
+                    <h4 class="empty-state-title">Belum Ada Rekening</h4>
+                    <p class="empty-state-text">Tambahkan rekening pertama Anda, misalnya 'Dompet' atau rekening bank.</p>
+                    <button class="btn-secondary-outline" id="add-first-rekening-btn">Buat Rekening Pertama</button>
+                </div>
+            `;
         }
     }
 }
