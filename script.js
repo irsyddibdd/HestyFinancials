@@ -25,7 +25,7 @@ window.addEventListener('load', function() {
 });
 
 
-const apsiUrl = 'https://script.google.com/macros/s/AKfycbyC89AxmeJvUzBeEhMQpklOchSUxG2a_ClDFem2XhniM_qQ0-GWMt6GhKzSRLc9EcOhMg/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
+const apsiUrl = 'https://script.google.com/macros/s/AKfycby6J2dgUUrfUAnRcdrNOKJU2MiTiTKuPJdc6czk3TawnzDzXzrneEWKppz9490qJBVcIw/exec'; // <-- PASTIKAN URL ANDA SUDAH BENAR DI SINI
 
 let allTransactions = [], budgetData = {}, goalsData = [], rekeningData = [];
 let pieChart, monthlyBarChart;
@@ -303,9 +303,6 @@ function setupEventListeners() {
             rekeningList.addEventListener('click', e => {
                 const editBtn = e.target.closest('.edit-rekening-btn');
                 if (editBtn) openEditRekeningModal(editBtn.dataset.nama);
-    
-                const deleteBtn = e.target.closest('.delete-rekening-btn');
-                if (deleteBtn) handleDeleteRekening(deleteBtn.dataset.nama);
             });
         }
     
@@ -677,9 +674,10 @@ function processSummary(transactions, rekening) {
         if (isNaN(trxDate)) return;
 
         if (trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) {
-            if (trx.tipe === 'Pemasukan') {
+            // Cek ini: Jangan hitung jika kategorinya "Saldo Awal"
+            if (trx.tipe === 'Pemasukan' && trx.kategori !== 'Saldo Awal') {
                 pemasukanBulanIni += jumlah;
-            } else {
+            } else if (trx.tipe === 'Pengeluaran') {
                 pengeluaranBulanIni += jumlah;
             }
         }
@@ -812,15 +810,14 @@ function displaySettingsLists() {
             rekeningData.forEach(rekening => {
                 const li = document.createElement('li');
                 li.innerHTML = `
-                    <span>${rekening.Nama}</span>
-                    <div class="list-item-details">
-                         <strong>${formatCurrency(rekening.Saldo)}</strong>
-                        <div class="list-item-actions">
-                            <button class="action-btn edit-rekening-btn" data-nama="${rekening.Nama}"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="action-btn delete-rekening-btn" data-nama="${rekening.Nama}"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                <span>${rekening.Nama}</span>
+                <div class="list-item-details">
+                     <strong>${formatCurrency(rekening.Saldo)}</strong>
+                    <div class="list-item-actions">
+                        <button class="action-btn edit-rekening-btn" data-nama="${rekening.Nama}"><i class="fas fa-pencil-alt"></i></button>
                     </div>
-                `;
+                </div>
+            `;
                 rekeningList.appendChild(li);
             });
         } else {
@@ -1445,18 +1442,48 @@ async function handleAddRekening(e) {
     e.preventDefault();
     showLoading();
     const form = e.target;
-    const payload = {
-        nama: document.getElementById('rekeningName').value,
-        saldoAwal: document.getElementById('rekeningInitialBalance').value.replace(/\D/g, '')
+    const rekeningName = document.getElementById('rekeningName').value;
+    const initialBalanceInput = document.getElementById('rekeningInitialBalance').value;
+    const initialBalance = initialBalanceInput ? initialBalanceInput.replace(/\D/g, '') : '0';
+
+    // Langkah 1: Buat rekening dengan saldo awal 0 (seperti sebelumnya)
+    const rekeningPayload = {
+        nama: rekeningName,
+        saldoAwal: '0' 
     };
-    const data = { type: 'add_rekening', payload };
+    const data = { type: 'add_rekening', payload: rekeningPayload };
+
     try {
         const res = await sendData(data);
         if (res.result === 'success') {
             form.reset();
+
+            // Langkah 2: JIKA ada saldo awal, buat transaksi terpisah
+            if (Number(initialBalance) > 0) {
+                const transactionPayload = {
+                    tanggal: new Date().toISOString().split('T')[0], // Tanggal hari ini
+                    jumlah: initialBalance,
+                    tipe: 'Pemasukan',
+                    rekening: rekeningName,
+                    kategori: 'Saldo Awal', // Kategori khusus!
+                    deskripsi: 'Pencatatan saldo awal untuk rekening baru.'
+                };
+                const transactionData = { type: 'add_transaction', payload: transactionPayload };
+                // Kirim data transaksi ini "di belakang layar"
+                await sendData(transactionData); 
+            }
+
+            // Muat ulang semua data setelah semua proses selesai
             await loadDashboardData('✅ Rekening berhasil ditambahkan!');
-        } else { showNotification(`❌ Gagal: ${res.error}`, 'error'); hideLoading(); }
-    } catch (err) { showNotification(`❌ Error: ${err.message}`, 'error'); hideLoading(); }
+
+        } else {
+            showNotification(`❌ Gagal: ${res.error}`, 'error');
+            hideLoading();
+        }
+    } catch (err) {
+        showNotification(`❌ Error: ${err.message}`, 'error');
+        hideLoading();
+    }
 }
 
 async function handleDeleteRekening(nama) {
