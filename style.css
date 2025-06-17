@@ -66,10 +66,16 @@ body::before {
     bottom: 0;
     z-index: -1;
 
+    /* Background lama kita matikan sementara */
+    /*
     background:
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
         url('rapunzel.jpg') no-repeat center center;
     background-size: cover;
+    */
+
+    /* Ganti dengan warna solid untuk tes */
+    background: red;
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
