@@ -50,10 +50,16 @@ body {
 }
 
 /* TAMBAHKAN BLOK BARU INI */
+/* style.css */
+
 html {
     /* Penting: Cegah html dari scrolling, biarkan body yang melakukannya */
     height: 100%;
     overflow: hidden;
+
+    /* === TAMBAHKAN BARIS INI UNTUK MENGHILANGKAN GARIS PUTIH === */
+    background-color: #4a274f;
+    /* Warna dasar gelap dari background */
 }
 
 /* !!! PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP !!! */
@@ -66,16 +72,11 @@ body::before {
     bottom: 0;
     z-index: -1;
 
-    /* Background lama kita matikan sementara */
-    /*
+    /* KEMBALIKAN BLOK INI SEPERTI SEMULA */
     background:
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
         url('rapunzel.jpg') no-repeat center center;
     background-size: cover;
-    */
-
-    /* Ganti dengan warna solid untuk tes */
-    background: red;
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
