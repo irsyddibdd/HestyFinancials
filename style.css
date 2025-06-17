@@ -53,6 +53,7 @@ html {
     /* Penting: Cegah html dari scrolling, biarkan body yang melakukannya */
     height: 100%;
     overflow: hidden;
+    background-color: #4a274f; /* Warna dasar gelap dari background */
 }
 
 /* !!! PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP !!! */
