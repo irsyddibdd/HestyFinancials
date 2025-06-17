@@ -33,30 +33,61 @@
 }
 
 /* GANTI ATURAN BODY LAMA DENGAN VERSI STABIL INI */
+/* === PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP === */
+
+/* Langkah 1: Atur HTML agar tidak menghalangi lapisan background */
+html {
+    height: 100%;
+    overflow-x: hidden;
+    /* Hapus background-color dari sini agar tidak menutupi lapisan ::before */
+}
+
+/* Langkah 2: Buat body menjadi 'wadah' transparan */
 body {
     font-family: 'Poppins', sans-serif;
     color: var(--text-primary);
+    min-height: 100vh;
 
-    /* Properti background kita kembalikan ke body */
+    /* isolation: isolate; WAJIB ada agar z-index:-1 pada ::before 
+       tidak bersembunyi di belakang elemen <html> */
+    isolation: isolate;
+
+    /* Semua properti background-* dipindahkan ke ::before */
+}
+
+/* Langkah 3: Buat lapisan virtual untuk background */
+body::before {
+    content: '';
+    /* Wajib ada untuk menampilkan pseudo-element */
+    position: fixed;
+    /* Kunci utama: posisi tetap relatif ke layar */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    /* Letakkan lapisan ini di belakang semua konten body */
+
+    /* Pindahkan semua properti background ke sini */
     background:
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
         url('rapunzel.jpg') no-repeat center center;
     background-size: cover;
 
-    /* Ini penting agar background tidak diam */
-    background-attachment: scroll;
-
-    /* Pastikan body setidaknya setinggi layar */
-    min-height: 100vh;
+    /* background-attachment tidak lagi dibutuhkan karena position:fixed 
+       sudah memberikan efek yang sama */
 }
 
-/* Aturan untuk html bisa dibiarkan seperti sebelumnya untuk mencegah garis putih */
-html {
-    height: 100%;
-    overflow-x: hidden;
-    /* Cukup ini saja, biarkan body yang mengontrol scroll Y */
-    background-color: #4a274f;
+/* Aturan media query untuk mengganti gambar di mobile tetap berlaku,
+   tapi sekarang menargetkan ::before */
+@media (max-width: 768px) {
+    body::before {
+        background-image:
+            linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
+            url('rapunzel-mobile.jpg');
+    }
 }
+
 
 /* !!! PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP !!! */
 
