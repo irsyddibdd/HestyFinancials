@@ -56,19 +56,23 @@ html {
 body::before {
     content: '';
     position: fixed;
-    /* Ini kuncinya, posisi fixed pada elemen */
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
     z-index: -1;
-    /* Letakkan lapisan ini di paling belakang */
-
-    /* Pindahkan semua properti background ke sini */
     background:
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
         url('rapunzel.jpg') no-repeat center center;
     background-size: cover;
+}
+
+/* Aturan khusus untuk perangkat seluler */
+@media (max-width: 768px) {
+    body::before {
+        background-size: 100%;
+        /* Atur ulang ukuran gambar */
+    }
 }
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
