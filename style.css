@@ -32,62 +32,33 @@
     box-sizing: border-box;
 }
 
-/* GANTI ATURAN BODY YANG LAMA DENGAN INI */
-/* GANTI ATURAN BODY YANG LAMA DENGAN INI */
+/* GANTI ATURAN BODY LAMA DENGAN VERSI STABIL INI */
 body {
     font-family: 'Poppins', sans-serif;
     color: var(--text-primary);
 
-    /* Jadikan body sebagai kontainer scroll utama */
-    height: 100%;
-    overflow-y: scroll;
-    /* Izinkan scrolling vertikal hanya pada body */
-    overflow-x: hidden;
-    /* Cegah scrolling horizontal yang tidak diinginkan */
+    /* Properti background kita kembalikan ke body */
+    background:
+        linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
+        url('rapunzel.jpg') no-repeat center center;
+    background-size: cover;
 
-    /* Properti ini meningkatkan pengalaman scroll di perangkat iOS */
-    -webkit-overflow-scrolling: touch;
+    /* Ini penting agar background tidak diam */
+    background-attachment: scroll;
+
+    /* Pastikan body setidaknya setinggi layar */
+    min-height: 100vh;
 }
 
-/* TAMBAHKAN BLOK BARU INI */
-/* style.css */
-
+/* Aturan untuk html bisa dibiarkan seperti sebelumnya untuk mencegah garis putih */
 html {
-    /* Penting: Cegah html dari scrolling, biarkan body yang melakukannya */
     height: 100%;
-    overflow: hidden;
-
-    /* === TAMBAHKAN BARIS INI UNTUK MENGHILANGKAN GARIS PUTIH === */
+    overflow-x: hidden;
+    /* Cukup ini saja, biarkan body yang mengontrol scroll Y */
     background-color: #4a274f;
-    /* Warna dasar gelap dari background */
 }
 
 /* !!! PERBAIKAN UNTUK BUG BACKGROUND ZOOM DI HP !!! */
-/* 1. Mengatur gambar agar menutupi layar */
-#background-image {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* Ini adalah 'background-size: cover' versi <img> */
-    z-index: -2;
-    /* Kita letakkan di lapisan paling belakang */
-}
-
-/* 2. Membuat lapisan gradien di atas gambar */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6));
-    z-index: -1;
-    /* Lapisan gradien ini berada di atas gambar, tapi di belakang konten */
-}
 
 /* === SPLASH SCREEN / INTRO ANIMATION === */
 #splash-screen {
