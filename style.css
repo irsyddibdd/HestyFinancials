@@ -33,6 +33,7 @@
 }
 
 /* GANTI ATURAN BODY YANG LAMA DENGAN INI */
+/* GANTI ATURAN BODY YANG LAMA DENGAN INI */
 body {
     font-family: 'Poppins', sans-serif;
     color: var(--text-primary);
@@ -59,15 +60,12 @@ html {
 body::before {
     content: '';
     position: fixed;
-    /* Ini kuncinya, posisi fixed pada elemen */
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
     z-index: -1;
-    /* Letakkan lapisan ini di paling belakang */
 
-    /* Pindahkan semua properti background ke sini */
     background:
         linear-gradient(rgba(74, 39, 79, 0.6), rgba(74, 39, 79, 0.6)),
         url('rapunzel.jpg') no-repeat center center;
